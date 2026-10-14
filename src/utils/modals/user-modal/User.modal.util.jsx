@@ -1,9 +1,3 @@
-/**
- * @file UserProfileModal.util.jsx
- * @module Components/UserProfileModal
- * @description Dropdown modal displaying current user options with Redux auth logout integration.
- */
-
 import React, { useEffect, useState, useCallback } from "react";
 import { LogOut } from "lucide-react";
 import { useDispatch } from "react-redux";

@@ -1,9 +1,3 @@
-/**
- * @file User.modal.util.jsx
- * @module UserModal
- * @description User registration modal with dynamic role selection (role name/string based).
- */
-
 import { useReducer, useEffect, useCallback, useMemo } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { toast } from "react-hot-toast";
