@@ -12,7 +12,6 @@ import {
   registerUser,
   getAllUsers,
 } from "../../../redux/slices/Auth.slice.redux";
-import { fetchRoles } from "../../../redux/slices/Roles.slice.redux";
 import ModalShell from "../../../shared/ModalShell.shared";
 import FormField from "../../../shared/FormField.shared";
 
@@ -97,11 +96,7 @@ const UserModal = ({ isOpen, onClose }) => {
 
   /* ------------------------------- Effects ------------------------------- */
 
-  useEffect(() => {
-    if (!isOpen) return;
-    dispatch(fetchRoles());
-    dispatchAction({ type: "RESET" });
-  }, [isOpen, dispatch]);
+
 
   // Auto-select first role name once fetched (only if none selected)
   useEffect(() => {
