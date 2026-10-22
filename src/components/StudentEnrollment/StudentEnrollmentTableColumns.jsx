@@ -10,6 +10,8 @@ const StudentEnrollmentTableColumns = () => [
       </span>
     ),
   },
+
+  
   {
     key: "student_name",
     label: "STUDENT",
