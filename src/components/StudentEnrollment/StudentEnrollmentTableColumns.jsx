@@ -10,10 +10,9 @@ const StudentEnrollmentTableColumns = () => [
       </span>
     ),
   },
-
-  
   {
     key: "student_name",
+    
     label: "STUDENT",
     render: (row) => (
       <span className="text-xs font-semibold text-slate-800">
