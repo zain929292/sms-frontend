@@ -2,7 +2,6 @@
 import React, { memo } from "react";
 import { NavLink } from "react-router-dom";
 import { FileText } from "lucide-react";
-// import { menuIcons } from "./sidebarData";
 
 const SidebarItem = memo(({ item, collapsed, onNavigate }) => {
   const Icon = item.icon || menuIcons[item.label] || FileText;

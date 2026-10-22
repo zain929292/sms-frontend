@@ -1,7 +1,7 @@
 
 import React, { memo } from "react";
-import SidebarGroup from "./SidebarNavComponents/sidebarGroup";
-import { STATIC_GROUPS } from "./SidebarNavComponents/sidebarData";
+import SidebarGroup from "./SidebarNavComponents/SidebarGroup";
+import { STATIC_GROUPS } from "./SidebarNavComponents/SidebarData";
 
 export const SidebarNav = memo(
   ({ groups = STATIC_GROUPS, collapsed, onNavigate }) => {
