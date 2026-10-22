@@ -13,6 +13,9 @@ const Main = lazy(() => import("../screens/dashboard/Main.dashboard"));
 // Administration
 const Users = lazy(() => import("../screens/user-screens/User"));
 
+const Students = lazy(()=> import("../screens/student/Students"));
+const StudentEnrollments = lazy (()=> import("../screens/student/StudentEnrollment"));
+
 
 /** Small spinner shown ONLY in the content area. */
 const PageLoader = () => (
@@ -35,6 +38,10 @@ const PROTECTED_ROUTES = [
 
   // Administration
   { path: "administration/users", element: page(Users) },
+
+  {path: "students" , element: page(Students)},
+  {path: "student-promotion" , element: page(StudentEnrollments)}
+
 ];
 
 const AppRouter = () => (

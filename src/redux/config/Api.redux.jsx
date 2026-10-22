@@ -3,7 +3,7 @@ import axios from "axios";
 import CONFIG from "./Config.redux";
 
 export const api = axios.create({
-  baseURL: CONFIG.BACKEND_API_URL,
+  baseURL: CONFIG.LOCAL_API_URL,
   timeout: 15000, // fail fast instead of hanging forever on a slow network
   headers: { "Content-Type": "application/json" },
 });

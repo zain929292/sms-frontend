@@ -1,9 +1,3 @@
-/**
- * @file FormField.shared.jsx
- * @module Shared/FormField
- * @description Reusable form field with icon, label, error, required marker, and optional dropdown support.
- */
-
 import { AlertCircle } from "lucide-react";
 
 const BASE_CONTROL =

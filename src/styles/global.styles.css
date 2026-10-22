@@ -1,17 +1,8 @@
-/**
- * @file global.styles.css
- * @module Styles/Global
- * @description 
- * The project's central Design System and Theme configuration.
- */
 
-/* Import Google Fonts first */
 @import url("https://fonts.googleapis.com/css2?family=Open+Sans:ital,wght@0,300..800;1,300..800&display=swap");
 
-/* Tailwind CSS v4 import - This is correct for v4 */
 @import "tailwindcss";
 
-/* Your custom CSS variables and styles */
 @layer base {
   :root {
     /* Typography */
