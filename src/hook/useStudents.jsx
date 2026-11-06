@@ -1,7 +1,7 @@
 
 import { useCallback, useEffect, useState } from "react";
 import { Eye, Pencil, Trash2 } from "lucide-react";
-import Toast from "../utils/toast/toast.util";
+import toast from "react-hot-toast";
 
 import api from "../redux/config/Api.redux";
 import { exportToExcel } from "../utils/export/Export.util";
@@ -87,7 +87,7 @@ export default function useStudents() {
 
         return result;
       } catch (error) {
-        Toast.error(
+        toast.error(
           getErrorMessage(error, "Failed to fetch students.")
         );
 
@@ -198,10 +198,10 @@ export default function useStudents() {
             `/student/update/${selectedStudent.id}`,
             payload
           );
-          Toast.success("Student updated successfully.");
+          toast.success("Student updated successfully.");
         } else {
           await api.post("/student/create", payload);
-          Toast.success("Student created successfully.");
+          toast.success("Student created successfully.");
         }
 
         closeModal();
@@ -222,10 +222,10 @@ export default function useStudents() {
 
         if (validationErrors.length) {
           validationErrors.forEach((message) =>
-            Toast.error(message)
+            toast.error(message)
           );
         } else {
-          Toast.error(
+          toast.error(
             getErrorMessage(
               error,
               selectedStudent
@@ -245,7 +245,7 @@ export default function useStudents() {
   const handleDelete = useCallback(
     async (student) => {
       if (!student?.id) {
-        Toast.error("Student ID is missing.");
+        toast.error("Student ID is missing.");
         return;
       }
 
@@ -262,7 +262,7 @@ export default function useStudents() {
       try {
         await api.delete(`/student/delete/${student.id}`);
 
-        Toast.success("Student deleted successfully.");
+        toast.success("Student deleted successfully.");
 
         setSelectedStudentId(null);
         setSearchTerm("");
@@ -276,7 +276,7 @@ export default function useStudents() {
           false
         );
       } catch (error) {
-        Toast.error(
+        toast.error(
           getErrorMessage(error, "Failed to delete student.")
         );
       } finally {
@@ -316,7 +316,7 @@ export default function useStudents() {
   // Export current displayed results
   const handleExport = useCallback(() => {
     if (!displayedStudents.length) {
-      Toast.error("No students to export.");
+      toast.error("No students to export.");
       return;
     }
 
@@ -326,7 +326,7 @@ export default function useStudents() {
       STUDENT_EXPORT_COLUMNS
     );
 
-    Toast.success(
+    toast.success(
       `Exported ${displayedStudents.length} students.`
     );
   }, [displayedStudents]);
