@@ -1,92 +1,112 @@
-/**
- * @file Signin.auth.jsx
- * @module Screens/Auth/Signin
- * @description
- * Hospital Management System Sign-in screen featuring an ultra-polished, responsive layout.
- */
 
 import React, { memo, useCallback, useEffect, useRef, useState } from "react";
 import { Navigate } from "react-router-dom";
 import "../../styles/global.styles.css";
+
 import DoctorIllustration from "../../assets/illustrations/doctor-character.png";
 import InputField from "../../utils/input-field/InputField.util";
 import Button from "../../utils/buttons/Button.util";
 import { validateFields } from "../../utils/validations/Validations.util";
+
 import { toast } from "react-hot-toast";
 import { useDispatch, useSelector } from "react-redux";
 import { login } from "../../redux/slices/Auth.slice.redux";
 
-/**
- * Static left banner. Memoized so it does NOT re-render on every keystroke
- * in the email / password inputs.
- */
-const BrandPanel = memo(() => (
-  <div className="hidden lg:flex relative bg-gradient-to-b from-[#eafaf7] via-[#d4f6ef] to-[#bef2e8] flex-col justify-between p-10 xl:p-12 border-r border-teal-100/60 overflow-hidden">
-    {/* Geometric Accents */}
-    <div className="absolute top-8 left-10 w-20 h-20 rounded-full border-4 border-white/50 pointer-events-none" />
-    <div className="absolute top-24 right-16 w-10 h-10 rounded-full border-2 border-teal-600/20 pointer-events-none" />
-    <div className="absolute -bottom-10 -left-10 w-64 h-64 rounded-full bg-teal-300/40 blur-3xl pointer-events-none" />
+import { GraduationCap, ShieldCheck } from "lucide-react";
 
-    {/* Hero Header */}
-    <div className="z-10">
-      <span className="inline-flex items-center px-3.5 py-1 bg-white/70 rounded-full text-xs font-bold text-teal-800 tracking-wider uppercase mb-4 shadow-sm border border-teal-100/50">
-        Healthcare Control Center
+// ==================== BRAND PANEL ====================
+
+const BrandPanel = memo(() => (
+  <div className="relative hidden lg:flex flex-col overflow-hidden bg-gradient-to-br from-[#0f766e] to-[#0d9488] p-10 xl:p-12">
+
+    {/* Background Decoration */}
+    <div className="absolute -top-24 -left-24 h-80 w-80 rounded-full border-[45px] border-white/[0.06]" />
+    <div className="absolute -bottom-32 -right-24 h-80 w-80 rounded-full bg-white/[0.06]" />
+
+    {/* Logo */}
+    <div className="relative z-10 flex items-center gap-3">
+      <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-white/15">
+        <GraduationCap size={29} className="text-white" />
+      </div>
+
+      <span className="text-xl font-bold tracking-tight text-white">
+        SMS Portal
       </span>
-      <h1 className="text-3xl xl:text-4xl font-black text-slate-900 tracking-tight leading-tight">
-        WELCOME BACK <span className="text-[#0f766e]">!</span>
+    </div>
+
+    {/* Heading */}
+    <div className="relative z-10 mt-14">
+      <h1 className="text-3xl font-bold leading-tight text-white xl:text-[36px]">
+        Manage Your School
+        <br />
+        <span className="text-[#b7e9df]">With Ease.</span>
       </h1>
-      <p className="text-slate-600 text-sm mt-3 font-medium leading-relaxed max-w-xs">
-        Access your hospital management dashboard and clinical operations
-        platform.
+
+      <p className="mt-4 max-w-[340px] text-sm leading-6 text-white/75">
+        One place for your students, staff and academic activities.
       </p>
     </div>
 
     {/* Illustration */}
-    <div className="relative z-20 flex justify-center items-end mt-auto pt-6 pointer-events-none">
+    <div className="relative z-10 flex flex-1 items-center justify-center">
       <img
         src={DoctorIllustration}
-        alt="Doctor Illustration"
+        alt="School Management"
         decoding="async"
-        className="max-h-[380px] xl:max-h-[420px] object-contain drop-shadow-[0_20px_20px_rgba(15,118,110,0.2)]"
+        className="max-h-[340px] w-full object-contain drop-shadow-[0_15px_25px_rgba(0,0,0,0.12)]"
       />
     </div>
+
+    {/* Bottom Text */}
+    <p className="relative z-10 text-xs font-medium tracking-wide text-white/70">
+      Simplifying School Management
+    </p>
+
   </div>
 ));
+
 BrandPanel.displayName = "BrandPanel";
+
+// ==================== SIGN IN ====================
 
 const Signin = () => {
   const dispatch = useDispatch();
+
   const token = useSelector((state) => state.auth.token);
   const loading = useSelector((state) => state.auth.loading);
 
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
 
-  // Guards against the form submit + Button onPress firing twice (double API call).
   const submitting = useRef(false);
 
-  const handleEmailChange = useCallback((e) => setEmail(e.target.value), []);
-  const handlePasswordChange = useCallback(
-    (e) => setPassword(e.target.value),
-    [],
+  const handleEmailChange = useCallback(
+    (e) => setEmail(e.target.value),
+    []
   );
 
-  // Warm up the dashboard chunk while the user is typing their credentials.
+  const handlePasswordChange = useCallback(
+    (e) => setPassword(e.target.value),
+    []
+  );
+
   useEffect(() => {
-    const id = setTimeout(
-      () => import("../dashboard/Main.dashboard").catch(() => {}),
-      300,
-    );
-    return () => clearTimeout(id);
+    import("../dashboard/Main.dashboard").catch(() => {});
   }, []);
 
   const handleSignin = useCallback(
     async (event) => {
       event?.preventDefault?.();
+
       if (submitting.current) return;
 
       const cleanEmail = email.trim();
-      const errors = validateFields({ email: cleanEmail, password });
+
+      const errors = validateFields({
+        email: cleanEmail,
+        password,
+      });
+
       const firstError = Object.values(errors)[0];
 
       if (firstError) {
@@ -95,59 +115,95 @@ const Signin = () => {
       }
 
       submitting.current = true;
+
       try {
         const result = await dispatch(
-          login({ email: cleanEmail, password }),
+          login({
+            email: cleanEmail,
+            password,
+          })
         ).unwrap();
 
-        // Redirect happens instantly below (token is now in the store).
         toast.success(result?.message || "Login successful");
+
       } catch (err) {
-        const message = err?.message || "Login failed. Please try again.";
+        const message =
+          err?.message || "Login failed. Please try again.";
 
         if (err?.status === 423) {
           toast.error(message, { duration: 5000 });
-        } else if (err?.attempts !== undefined && 3 - err.attempts > 0) {
-          toast.error(`${message} (${3 - err.attempts} attempts remaining)`);
+        } else if (
+          err?.attempts !== undefined &&
+          3 - err.attempts > 0
+        ) {
+          toast.error(
+            `${message} (${3 - err.attempts} attempts remaining)`
+          );
         } else {
           toast.error(message);
         }
+
       } finally {
         submitting.current = false;
       }
     },
-    [email, password, dispatch],
+    [email, password, dispatch]
   );
 
-  // Already logged in (or just logged in) -> go straight to the dashboard.
-  if (token) return <Navigate to="/overview/dashboard" replace />;
+  if (token) {
+    return <Navigate to="/overview/dashboard" replace />;
+  }
 
   return (
-    <section
-      id="signin-screen"
-      className="h-screen w-full overflow-hidden flex items-center justify-center bg-gradient-to-br from-slate-100 via-[#f0f4f8] to-[#e6fbf8] p-4 sm:p-6 lg:p-8 relative"
-    >
-      {/* Ambient Glows */}
-      <div className="absolute top-[-10%] left-[-10%] w-[300px] sm:w-[500px] h-[300px] sm:h-[500px] bg-[#10b981]/15 rounded-full blur-3xl pointer-events-none" />
-      <div className="absolute bottom-[-10%] right-[-10%] w-[300px] sm:w-[500px] h-[300px] sm:h-[500px] bg-teal-500/15 rounded-full blur-3xl pointer-events-none" />
+    <main className="relative flex h-[100dvh] w-full items-center justify-center overflow-hidden bg-[#edf8f6] p-3 sm:p-15">
 
-      {/* Main Container */}
-      <div className="w-full max-w-5xl min-h-[550px] lg:min-h-[620px] bg-white/90 rounded-3xl lg:rounded-[2.5rem] shadow-[0_20px_50px_rgba(15,118,110,0.12)] border border-white/60 grid grid-cols-1 lg:grid-cols-2 overflow-hidden z-10 my-auto">
+      {/* Background */}
+      <div className="pointer-events-none absolute -left-32 -top-36 h-[430px] w-[430px] rounded-full bg-[#c5eee5]/50 blur-sm" />
+      <div className="pointer-events-none absolute -bottom-36 -right-32 h-[430px] w-[430px] rounded-full bg-[#b7e9df]/50 blur-sm" />
+
+      {/* Login Card */}
+      <div className="relative z-10 grid h-[min(510px,calc(100dvh-32px))] w-full max-w-[1000px] grid-cols-1 overflow-hidden rounded-2xl border border-white bg-white shadow-[0_20px_70px_rgba(15,118,110,0.13)] sm:rounded-3xl lg:grid-cols-2">
+
+        {/* Left Panel */}
         <BrandPanel />
 
-        {/* Right Form Area */}
-        <div className="flex flex-col justify-center p-6 sm:p-10 lg:p-12 xl:p-14 bg-white">
-          <div className="w-full max-w-sm mx-auto">
-            <div className="text-center mb-8">
-              <h2 className="text-2xl font-extrabold tracking-tight text-slate-900">
-                <span className="text-[#0f766e]">HMS</span> Portal
-              </h2>
+        {/* Right Panel */}
+        <section className="relative flex items-center justify-center bg-white px-6 sm:px-12 lg:px-14">
+
+          {/* Mobile Logo */}
+          <div className="absolute left-0 right-0 top-7 flex justify-center lg:hidden">
+            <div className="flex items-center gap-2">
+              <GraduationCap size={29} className="text-[#0f766e]" />
+              <span className="text-lg font-bold text-slate-800">
+                SMS Portal
+              </span>
+            </div>
+          </div>
+
+          {/* Form */}
+          <div className="relative z-10 w-full max-w-[360px]">
+
+            {/* Heading */}
+            <div className="mb-9 text-center">
+
+              <div className="mx-auto mb-5 h-1 w-12 rounded-full bg-[#0d9488]" />
+
+              <h1 className="text-[30px] font-bold tracking-tight text-[#203b43] sm:text-[34px]">
+                Welcome <span className="text-[#0f766e]">Back!</span>
+              </h1>
+
+              <p className="mt-2 text-sm text-slate-500">
+                Sign in to continue
+              </p>
+
             </div>
 
-            <form className="space-y-4" onSubmit={handleSignin}>
+            {/* Login Form */}
+            <form onSubmit={handleSignin} className="space-y-6">
+
               <InputField
-                label="Email"
-                type="text"
+                label="Email Address"
+                type="email"
                 editable={!loading}
                 value={email}
                 onChange={handleEmailChange}
@@ -163,7 +219,7 @@ const Signin = () => {
                 required
               />
 
-              <div className="pt-2">
+              <div className="pt-1">
                 <Button
                   title="Sign In"
                   width="100%"
@@ -171,11 +227,27 @@ const Signin = () => {
                   loading={loading}
                 />
               </div>
+
             </form>
+
+            {/* Security */}
+            <div className="mt-9 flex items-center justify-center gap-2">
+              <ShieldCheck size={17} className="text-[#0d9488]" />
+
+              <span className="text-xs font-medium text-slate-400">
+                Secure Login
+              </span>
+            </div>
+
           </div>
-        </div>
+
+          {/* Bottom Decoration */}
+          <div className="pointer-events-none absolute -bottom-24 -right-20 h-48 w-48 rounded-full bg-[#e0f7f1]/70" />
+
+        </section>
+
       </div>
-    </section>
+    </main>
   );
 };
 

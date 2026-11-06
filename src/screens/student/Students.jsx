@@ -1,3 +1,4 @@
+
 import { Plus } from "lucide-react";
 
 import Table from "../../utils/table/Table.util";
@@ -25,38 +26,58 @@ export default function Students() {
       onSelectItem: s.handleSelectStudent,
       emptyMessage: "No matching students found.",
       itemRenderer: (student) => (
-        <>
-          <div className="flex items-center gap-3">
-            <div className="flex h-8 w-8 items-center justify-center rounded-full bg-teal-50 text-xs font-bold text-teal-700">
+        <div className="flex items-center justify-between gap-3">
+          <div className="flex min-w-0 items-center gap-3">
+            <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-teal-50 text-xs font-bold text-teal-700">
               {student.name?.[0]?.toUpperCase() || "S"}
             </div>
-            <div>
-              <p className="text-xs font-bold text-slate-800">{student.name}</p>
-              <p className="text-[11px] text-slate-500">Admission: {student.admission_number || "N/A"}</p>
+
+            <div className="min-w-0">
+              <p className="truncate text-xs font-bold text-slate-800">
+                {student.name}
+              </p>
+              <p className="truncate text-[11px] text-slate-500">
+                Admission: {student.admission_number || "N/A"}
+              </p>
             </div>
           </div>
-          <span className="text-xs text-slate-400">ID: {student.id}</span>
-        </>
+
+          <span className="shrink-0 text-xs text-slate-400">
+            ID: {student.id}
+          </span>
+        </div>
       ),
     },
+
     exportConfig: {
       onClick: s.handleExport,
       count: s.displayedStudents.length,
       label: "Export",
       showCount: true,
     },
+
     hasFilters: s.hasFilters,
     onClearAll: s.handleClearAllFilters,
   };
 
   return (
     <div className="space-y-4">
-      <StudentStats total={s.displayedStudents.length} active={s.activeCount} inactive={s.inactiveCount} />
+      <StudentStats
+        total={s.stats.total}
+        active={s.stats.active}
+        inactive={s.stats.inactive}
+      />
+
       <FilterBar {...filterConfig} />
+
       <Table
         title="Student Management"
         actionButton={
-          <button type="button" onClick={s.openCreateModal} className="inline-flex items-center gap-2 rounded-xl bg-[var(--primary)] px-4 py-2.5 text-sm font-medium text-white shadow-sm transition-all hover:bg-[var(--secondary)] active:scale-95">
+          <button
+            type="button"
+            onClick={s.openCreateModal}
+            className="inline-flex items-center gap-2 rounded-xl bg-[var(--primary)] px-4 py-2.5 text-sm font-medium text-white shadow-sm transition-all hover:bg-[var(--secondary)] active:scale-95"
+          >
             <Plus size={18} />
             Add Student
           </button>
@@ -64,26 +85,34 @@ export default function Students() {
         columns={StudentTableColumns()}
         data={s.paginatedStudents}
         keyField="id"
-        loading={false}
+        loading={s.loading}
         getRowActions={s.getRowActions}
-        pagination={{ page: s.currentPage, limit: s.itemsPerPage, total: s.displayedStudents.length, last_page: s.totalPages }}
+        pagination={{
+          page: s.currentPage,
+          limit: s.itemsPerPage,
+          total: s.pagination.total,
+          last_page: s.totalPages,
+        }}
         onPageChange={s.setCurrentPage}
-        onLimitChange={(limit) => { s.setItemsPerPage(limit); s.setCurrentPage(1); }}
+        onLimitChange={(limit) => {
+          s.setItemsPerPage(Number(limit));
+          s.setCurrentPage(1);
+        }}
         limitOptions={STUDENT_LIMIT_OPTIONS}
       />
-  
-      <StudentModal 
-        isOpen={s.isModalOpen} 
-        onClose={s.closeModal} 
-        studentData={s.selectedStudent} 
-        onSubmit={s.handleSaveStudent} 
-        />
+
+      <StudentModal
+        isOpen={s.isModalOpen}
+        onClose={s.closeModal}
+        studentData={s.selectedStudent}
+        onSubmit={s.handleSaveStudent}
+      />
+
       <StudentViewModal
         isOpen={s.isViewModalOpen}
         onClose={s.closeViewModal}
         student={s.viewStudent}
       />
-
     </div>
   );
 }

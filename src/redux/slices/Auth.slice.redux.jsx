@@ -1,10 +1,3 @@
-/**
- * @file Auth.slice.js
- * @module Redux/Slices/Auth
- * @description
- * Redux Toolkit slice managing the Authentication lifecycle for HMS Users.
- */
-
 import { createSlice, createAsyncThunk } from "@reduxjs/toolkit";
 import api from "../config/Api.redux";
 
@@ -51,11 +44,13 @@ const toRejection = (error, fallbackMessage) => {
 /** Flatten a user + user_details record for the UI. */
 const mapUser = (user) => {
   const d = user.user_details ?? null;
+
   return {
     id: user.id,
     name: user.name,
     email: user.email,
     role: user.role,
+    role_name: user.role_name ?? null,
     created_at: user.created_at,
     staff: d,
     staff_id: d?.id ?? null,

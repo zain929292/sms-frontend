@@ -1,7 +1,7 @@
 import { Users, UserCheck, UserX } from "lucide-react";
 import StatCard from "../../utils/cards/Stat.card.util";
 
-const StudentStats = ({ total, active, inactive }) => {
+const StudentStats = ({ total,total_students, active, inactive }) => {
   const activeRate = total ? Math.round((active / total) * 100) : 0;
   const inactiveRate = total ? Math.round((inactive / total) * 100) : 0;
 

@@ -1,8 +1,17 @@
 
 import { useEffect, useState } from "react";
-import { X } from "lucide-react";
-import api from "../../../redux/config/Api.redux";
+import {
+  GraduationCap,
+  UserRound,
+  CalendarDays,
+} from "lucide-react";
 import toast from "react-hot-toast";
+import api from "../../../redux/config/Api.redux";
+
+import ModalShell from "../../../shared/ModalShell.shared";
+import FormField from "../../../shared/FormField.shared";
+import SearchableSelect from "../../../shared/SearchableSelect.shared";
+import { useModalAnimation } from "../../../shared/useModalAnimation.hook";
 
 const EMPTY_FORM = {
   student_id: "",
@@ -13,6 +22,13 @@ const EMPTY_FORM = {
   remarks: "",
 };
 
+const STATUS_OPTIONS = [
+  { value: "active", label: "Active" },
+  { value: "promoted", label: "Promoted" },
+  { value: "completed", label: "Completed" },
+  { value: "withdrawn", label: "Withdrawn" },
+];
+
 const getList = (response) => {
   const payload = response?.data;
 
@@ -20,278 +36,567 @@ const getList = (response) => {
   if (Array.isArray(payload?.data)) return payload.data;
   if (Array.isArray(payload?.students)) return payload.students;
   if (Array.isArray(payload?.classes)) return payload.classes;
-  if (Array.isArray(payload?.academic_sessions)) return payload.academic_sessions;
+  if (Array.isArray(payload?.academic_sessions)) {
+    return payload.academic_sessions;
+  }
   if (Array.isArray(payload)) return payload;
 
   return [];
 };
 
-const inputClass =
-  "mt-1 w-full rounded-lg border border-[var(--gray)] bg-white px-3 py-2.5 text-sm text-[var(--dark)] outline-none transition focus:border-[var(--primary)] focus:ring-2 focus:ring-teal-100";
-
-export default function StudentEnrollmentModal({
+const StudentEnrollmentModal = ({
   isOpen,
   onClose,
   enrollmentData,
   onSubmit,
   saving = false,
-}) {
-  const [form, setForm] = useState(EMPTY_FORM);
+}) => {
+  const { shouldRender, isAnimating } =
+    useModalAnimation(isOpen, 300);
+
+  /* -------------------------------------------------------------------------- */
+  /*                                   States                                   */
+  /* -------------------------------------------------------------------------- */
+
+  const [form, setForm] = useState({ ...EMPTY_FORM });
+
   const [students, setStudents] = useState([]);
   const [classes, setClasses] = useState([]);
   const [sessions, setSessions] = useState([]);
+
+  const [studentSearch, setStudentSearch] = useState("");
+  const [classSearch, setClassSearch] = useState("");
+  const [sessionSearch, setSessionSearch] = useState("");
+
+  const [openDropdown, setOpenDropdown] = useState(null);
+
   const [loadingOptions, setLoadingOptions] = useState(false);
+  const [loadError, setLoadError] = useState("");
+  const [retry, setRetry] = useState(0);
+
+  const [errors, setErrors] = useState({});
+
+  const isEdit = Boolean(enrollmentData?.id);
+
+  /* -------------------------------------------------------------------------- */
+  /*                              Initialize Form                               */
+  /* -------------------------------------------------------------------------- */
 
   useEffect(() => {
     if (!isOpen) return;
 
-    setForm(
-      enrollmentData
-        ? {
-            ...EMPTY_FORM,
-            student_id: String(enrollmentData.student_id ?? ""),
-            class_id: String(enrollmentData.class_id ?? ""),
-            academic_session_id: String(
-              enrollmentData.academic_session_id ?? ""
-            ),
-            enrollment_date:
-              enrollmentData.enrollment_date?.substring(0, 10) || "",
-            status: enrollmentData.status || "active",
-            remarks: enrollmentData.remarks || "",
-          }
-        : { ...EMPTY_FORM }
+    const source = enrollmentData || {};
+
+    const nextForm = {
+      ...EMPTY_FORM,
+      student_id: String(source.student_id ?? ""),
+      class_id: String(source.class_id ?? ""),
+      academic_session_id: String(
+        source.academic_session_id ?? ""
+      ),
+      enrollment_date:
+        source.enrollment_date?.substring(0, 10) ||
+        EMPTY_FORM.enrollment_date,
+      status: source.status || "active",
+      remarks: source.remarks || "",
+    };
+
+    setForm(nextForm);
+
+    const selectedStudent = students.find(
+      (item) => String(item.id) === nextForm.student_id
     );
-  }, [enrollmentData, isOpen]);
+
+    const selectedClass = classes.find(
+      (item) => String(item.id) === nextForm.class_id
+    );
+
+    const selectedSession = sessions.find(
+      (item) => String(item.id) === nextForm.academic_session_id
+    );
+
+    setStudentSearch(
+      selectedStudent
+        ? `${selectedStudent.name}${
+            selectedStudent.admission_number
+              ? ` (${selectedStudent.admission_number})`
+              : ""
+          }`
+        : ""
+    );
+
+    setClassSearch(
+      selectedClass
+        ? `${selectedClass.name}${
+            selectedClass.section
+              ? ` - ${selectedClass.section}`
+              : ""
+          }`
+        : ""
+    );
+
+    setSessionSearch(selectedSession?.name ?? "");
+
+    setErrors({});
+    setLoadError("");
+    setOpenDropdown(null);
+  }, [
+    isOpen,
+    enrollmentData,
+    students,
+    classes,
+    sessions,
+  ]);
+
+  /* -------------------------------------------------------------------------- */
+  /*                            Load Dropdown Data                              */
+  /* -------------------------------------------------------------------------- */
 
   useEffect(() => {
     if (!isOpen) return;
+
+    let cancelled = false;
 
     const loadOptions = async () => {
       setLoadingOptions(true);
+      setLoadError("");
 
       try {
-        const [studentRes, classRes, sessionRes] = await Promise.all([
-          api.get("/student/details"),
-          api.get("/class/details"),
-          api.get("/academic-session/details"),
-        ]);
+        const [studentRes, classRes, sessionRes] =
+          await Promise.all([
+            api.get("/student/details", {
+              params: { limit: 500 },
+            }),
+            api.get("/class/details"),
+            api.get("/academic-session/details"),
+          ]);
+
+        if (cancelled) return;
 
         setStudents(getList(studentRes));
         setClasses(getList(classRes));
         setSessions(getList(sessionRes));
       } catch (error) {
-        toast.error(
+        if (cancelled) return;
+
+        const message =
           error.response?.data?.message ||
-            "Failed to load student, class or session options."
-        );
+          "Failed to load dropdown options.";
+
+        setLoadError(message);
+        toast.error(message);
       } finally {
-        setLoadingOptions(false);
+        if (!cancelled) {
+          setLoadingOptions(false);
+        }
       }
     };
 
     loadOptions();
-  }, [isOpen]);
 
-  if (!isOpen) return null;
+    return () => {
+      cancelled = true;
+    };
+  }, [isOpen, retry]);
+
+  /* -------------------------------------------------------------------------- */
+  /*                               Form Handlers                                */
+  /* -------------------------------------------------------------------------- */
 
   const handleChange = (event) => {
     const { name, value } = event.target;
-    setForm((current) => ({ ...current, [name]: value }));
+
+    setForm((previous) => ({
+      ...previous,
+      [name]: value,
+    }));
+
+    setErrors((previous) => ({
+      ...previous,
+      [name]: "",
+    }));
   };
 
-  const handleSubmit = (event) => {
+  const handleClose = () => {
+    if (saving) return;
+
+    setOpenDropdown(null);
+    onClose();
+  };
+
+  const handleSubmit = async (event) => {
     event.preventDefault();
 
-    if (
-      !form.student_id ||
-      !form.class_id ||
-      !form.academic_session_id
-    ) {
-      toast.error("Please select student, class and academic session.");
+    const nextErrors = {};
+
+    if (!form.student_id) {
+      nextErrors.student_id = "Please select a student.";
+    }
+
+    if (!form.class_id) {
+      nextErrors.class_id = "Please select a class.";
+    }
+
+    if (!form.academic_session_id) {
+      nextErrors.academic_session_id =
+        "Please select an academic session.";
+    }
+
+    if (!form.enrollment_date) {
+      nextErrors.enrollment_date =
+        "Enrollment date is required.";
+    }
+
+    if (Object.keys(nextErrors).length > 0) {
+      setErrors(nextErrors);
+      toast.error("Please complete all required fields.");
       return;
     }
 
-    onSubmit({
-      ...form,
+    setErrors({});
+
+    await onSubmit({
       student_id: Number(form.student_id),
       class_id: Number(form.class_id),
-      academic_session_id: Number(form.academic_session_id),
+      academic_session_id: Number(
+        form.academic_session_id
+      ),
       enrollment_date: form.enrollment_date || null,
+      status: form.status,
+      remarks: form.remarks.trim() || null,
     });
   };
 
+  /* -------------------------------------------------------------------------- */
+  /*                            Searchable Filters                              */
+  /* -------------------------------------------------------------------------- */
+
+  const searchableFilter = (item, search) =>
+    String(item.name ?? "")
+      .toLowerCase()
+      .includes(search.toLowerCase());
+
+  const studentFilter = (item, search) => {
+    const text = `${item.name ?? ""} ${
+      item.admission_number ?? ""
+    }`;
+
+    return text.toLowerCase().includes(search.toLowerCase());
+  };
+
+  const classFilter = (item, search) => {
+    const text = `${item.name ?? ""} ${
+      item.section ?? ""
+    }`;
+
+    return text.toLowerCase().includes(search.toLowerCase());
+  };
+
+  const studentLabel = (item) =>
+    `${item.name}${
+      item.admission_number
+        ? ` (${item.admission_number})`
+        : ""
+    }`;
+
+  const classLabel = (item) =>
+    `${item.name}${
+      item.section ? ` - ${item.section}` : ""
+    }`;
+
+  /* -------------------------------------------------------------------------- */
+  /*                              Select Handler                                */
+  /* -------------------------------------------------------------------------- */
+
+  const selectItem = (
+    field,
+    item,
+    setSearch,
+    label
+  ) => {
+    setForm((previous) => ({
+      ...previous,
+      [field]: String(item.id),
+    }));
+
+    setErrors((previous) => ({
+      ...previous,
+      [field]: "",
+    }));
+
+    setSearch(label(item));
+    setOpenDropdown(null);
+  };
+
+  /* -------------------------------------------------------------------------- */
+  /*                                   Render                                   */
+  /* -------------------------------------------------------------------------- */
+
+  if (!shouldRender) return null;
+
   return (
-    <div
-      className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4"
-      onMouseDown={(event) => {
-        if (event.target === event.currentTarget && !saving) onClose();
-      }}
+    <ModalShell
+      isOpen={isOpen}
+      onClose={handleClose}
+      title={isEdit ? "Edit Enrollment" : "Student Enrollment"}
+      subtitle="Assign a student to a class and academic session."
+      icon={<GraduationCap size={22} />}
+      maxWidth="max-w-3xl"
+      disabled={saving}
     >
       <div
-        role="dialog"
-        aria-modal="true"
-        aria-labelledby="enrollment-modal-title"
-        className="max-h-[90vh] w-full max-w-2xl overflow-y-auto rounded-2xl bg-white shadow-xl"
+        className={`origin-center transform transition-all duration-300 ease-out ${
+          isAnimating
+            ? "translate-y-0 scale-100 opacity-100"
+            : "translate-y-4 scale-95 opacity-0"
+        }`}
       >
-        <div className="flex items-center justify-between border-b border-[var(--gray)] px-5 py-4 sm:px-6">
-          <div>
-            <h2
-              id="enrollment-modal-title"
-              className="text-lg font-bold text-slate-900"
-            >
-              {enrollmentData ? "Edit Enrollment" : "Student Enrollment"}
-            </h2>
-            <p className="mt-1 text-sm text-slate-500">
-              Assign a student to a class and academic session.
-            </p>
-          </div>
-
-          <button
-            type="button"
-            onClick={onClose}
-            disabled={saving}
-            className="rounded-lg p-2 text-slate-500 hover:bg-slate-100"
-            aria-label="Close modal"
-          >
-            <X size={20} />
-          </button>
-        </div>
-
-        <form onSubmit={handleSubmit} className="space-y-5 px-5 py-5 sm:px-6">
+        <form
+          onSubmit={handleSubmit}
+          className="p-5 sm:p-6"
+        >
           <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-            <label className="text-sm font-medium text-slate-700">
-              Student *
-              <select
-                className={inputClass}
-                name="student_id"
-                value={form.student_id}
-                onChange={handleChange}
-                required
-                disabled={loadingOptions || saving}
-              >
-                <option value="">Select student</option>
-                {students.map((student) => (
-                  <option key={student.id} value={student.id}>
-                    {student.name} {student.admission_number
-                      ? `(${student.admission_number})`
-                      : ""}
-                  </option>
-                ))}
-              </select>
-            </label>
 
-            <label className="text-sm font-medium text-slate-700">
-              Class *
-              <select
-                className={inputClass}
-                name="class_id"
-                value={form.class_id}
-                onChange={handleChange}
-                required
-                disabled={loadingOptions || saving}
-              >
-                <option value="">Select class</option>
-                {classes.map((item) => (
-                  <option key={item.id} value={item.id}>
-                    {item.name}
-                  </option>
-                ))}
-              </select>
-            </label>
+            {/* Student */}
+            <div>
+              <SearchableSelect
+                label="Student"
+                icon={UserRound}
+                placeholder="Search student..."
+                searchTerm={studentSearch}
+                onSearchChange={setStudentSearch}
+                items={students}
+                isOpen={openDropdown === "student"}
+                onOpenChange={(open) =>
+                  setOpenDropdown(open ? "student" : null)
+                }
+                filterFn={studentFilter}
+                onSelect={(item) =>
+                  selectItem(
+                    "student_id",
+                    item,
+                    setStudentSearch,
+                    studentLabel
+                  )
+                }
+                itemRenderer={(item) => (
+                  <div>
+                    <p className="text-xs font-semibold text-slate-800">
+                      {item.name}
+                    </p>
 
-            <label className="text-sm font-medium text-slate-700 sm:col-span-2">
-              Academic Session *
-              <select
-                className={inputClass}
-                name="academic_session_id"
-                value={form.academic_session_id}
-                onChange={handleChange}
-                required
-                disabled={loadingOptions || saving}
-              >
-                <option value="">Select academic session</option>
-                {sessions.map((item) => (
-                  <option key={item.id} value={item.id}>
-                    {item.name}
-                  </option>
-                ))}
-              </select>
-            </label>
-
-            <label className="text-sm font-medium text-slate-700">
-              Enrollment Date *
-              <input
-                className={inputClass}
-                type="date"
-                name="enrollment_date"
-                value={form.enrollment_date}
-                onChange={handleChange}
-                required
-                disabled={saving}
+                    <p className="text-[11px] text-slate-500">
+                      {item.admission_number
+                        ? `Admission No: ${item.admission_number}`
+                        : `Student ID: ${item.id}`}
+                    </p>
+                  </div>
+                )}
+                emptyMessage="No students found."
               />
-            </label>
 
-            <label className="text-sm font-medium text-slate-700">
-              Status *
-              <select
-                className={inputClass}
-                name="status"
-                value={form.status}
-                onChange={handleChange}
-                required
-                disabled={saving}
+              {errors.student_id && (
+                <p className="mt-1 text-xs text-red-500">
+                  {errors.student_id}
+                </p>
+              )}
+            </div>
+
+            {/* Class */}
+            <div>
+              <SearchableSelect
+                label="Class"
+                icon={GraduationCap}
+                placeholder="Search class..."
+                searchTerm={classSearch}
+                onSearchChange={setClassSearch}
+                items={classes}
+                isOpen={openDropdown === "class"}
+                onOpenChange={(open) =>
+                  setOpenDropdown(open ? "class" : null)
+                }
+                filterFn={classFilter}
+                onSelect={(item) =>
+                  selectItem(
+                    "class_id",
+                    item,
+                    setClassSearch,
+                    classLabel
+                  )
+                }
+                itemRenderer={(item) => (
+                  <div>
+                    <p className="text-xs font-semibold text-slate-800">
+                      {item.name}
+                    </p>
+
+                    <p className="text-[11px] text-slate-500">
+                      {item.section
+                        ? `Section ${item.section}`
+                        : `Class ID: ${item.id}`}
+                    </p>
+                  </div>
+                )}
+                emptyMessage="No classes found."
+              />
+
+              {errors.class_id && (
+                <p className="mt-1 text-xs text-red-500">
+                  {errors.class_id}
+                </p>
+              )}
+            </div>
+
+            {/* Academic Session */}
+            <div className="sm:col-span-2">
+              <SearchableSelect
+                label="Academic Session"
+                icon={CalendarDays}
+                placeholder="Search academic session..."
+                searchTerm={sessionSearch}
+                onSearchChange={setSessionSearch}
+                items={sessions}
+                isOpen={openDropdown === "session"}
+                onOpenChange={(open) =>
+                  setOpenDropdown(open ? "session" : null)
+                }
+                filterFn={searchableFilter}
+                onSelect={(item) =>
+                  selectItem(
+                    "academic_session_id",
+                    item,
+                    setSessionSearch,
+                    (value) => value.name
+                  )
+                }
+                itemRenderer={(item) => (
+                  <div>
+                    <p className="text-xs font-semibold text-slate-800">
+                      {item.name}
+                    </p>
+
+                    <p className="text-[11px] text-slate-500">
+                      Session ID: {item.id}
+                    </p>
+                  </div>
+                )}
+                emptyMessage="No academic sessions found."
+              />
+
+              {errors.academic_session_id && (
+                <p className="mt-1 text-xs text-red-500">
+                  {errors.academic_session_id}
+                </p>
+              )}
+            </div>
+
+            {/* Enrollment Date */}
+            <FormField
+              label="Enrollment Date"
+              name="enrollment_date"
+              type="date"
+              value={form.enrollment_date}
+              onChange={handleChange}
+              error={errors.enrollment_date}
+              required
+              disabled={saving}
+            />
+
+            {/* Status */}
+            <FormField
+              label="Status"
+              name="status"
+              value={form.status}
+              onChange={handleChange}
+              options={STATUS_OPTIONS}
+              required
+              disabled={saving}
+            />
+
+            {/* Remarks */}
+            <div className="sm:col-span-2">
+              <label
+                htmlFor="enrollment-remarks"
+                className="mb-1.5 block text-sm font-medium text-slate-700"
               >
-                <option value="active">Active</option>
-                <option value="promoted">Promoted</option>
-                <option value="completed">Completed</option>
-                <option value="withdrawn">Withdrawn</option>
-              </select>
-            </label>
+                Remarks
+              </label>
 
-            <label className="text-sm font-medium text-slate-700 sm:col-span-2">
-              Remarks
               <textarea
-                className={inputClass}
+                id="enrollment-remarks"
                 name="remarks"
                 value={form.remarks}
                 onChange={handleChange}
                 placeholder="Enter remarks"
                 rows={3}
                 disabled={saving}
+                className="w-full rounded-xl border border-slate-200 bg-slate-50/50 px-4 py-3 text-sm outline-none transition focus:border-teal-600 focus:ring-2 focus:ring-teal-600/10 disabled:opacity-60"
               />
-            </label>
+            </div>
           </div>
 
+          {/* Loading */}
           {loadingOptions && (
-            <p className="text-sm text-slate-500">
+            <p className="mt-4 text-sm text-slate-500">
               Loading dropdown options...
             </p>
           )}
 
-          <div className="flex flex-col-reverse gap-3 border-t border-[var(--gray)] pt-4 sm:flex-row sm:justify-end">
+          {/* Error & Retry */}
+          {loadError && (
+            <div className="mt-4 flex items-center justify-between gap-3 rounded-lg bg-red-50 p-3">
+              <p className="text-sm text-red-600">
+                {loadError}
+              </p>
+
+              <button
+                type="button"
+                onClick={() => {
+                  setLoadError("");
+                  setRetry((previous) => previous + 1);
+                }}
+                disabled={loadingOptions}
+                className="text-sm font-semibold text-red-700 disabled:opacity-50"
+              >
+                Retry
+              </button>
+            </div>
+          )}
+
+          {/* Footer */}
+          <div className="mt-6 flex justify-end gap-3 border-t border-slate-100 pt-4">
             <button
               type="button"
-              onClick={onClose}
+              onClick={handleClose}
               disabled={saving}
-              className="rounded-lg border border-[var(--gray)] px-4 py-2.5 text-sm font-semibold text-slate-700 hover:bg-slate-50"
+              className="rounded-xl border border-slate-200 bg-white px-5 py-2.5 text-sm font-semibold text-slate-600 transition-all duration-200 hover:bg-slate-50 hover:text-slate-800 active:scale-95 disabled:opacity-50"
             >
               Cancel
             </button>
 
             <button
               type="submit"
-              disabled={saving || loadingOptions}
-              className="rounded-lg bg-[var(--primary)] px-5 py-2.5 text-sm font-semibold text-white hover:bg-[var(--secondary)] disabled:cursor-not-allowed disabled:opacity-60"
+              disabled={
+                saving ||
+                loadingOptions ||
+                Boolean(loadError) ||
+                !form.student_id ||
+                !form.class_id ||
+                !form.academic_session_id
+              }
+              className="flex items-center gap-2 rounded-xl bg-teal-700 px-6 py-2.5 text-sm font-semibold text-white transition-all duration-200 hover:bg-teal-800 active:scale-95 disabled:cursor-not-allowed disabled:opacity-50"
             >
               {saving
                 ? "Saving..."
-                : enrollmentData
+                : isEdit
                   ? "Update Enrollment"
                   : "Enroll Student"}
             </button>
           </div>
         </form>
       </div>
-    </div>
+    </ModalShell>
   );
-}
+};
+
+export default StudentEnrollmentModal;

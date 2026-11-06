@@ -12,7 +12,6 @@ const StudentEnrollmentTableColumns = () => [
   },
   {
     key: "student_name",
-    
     label: "STUDENT",
     render: (row) => (
       <span className="text-xs font-semibold text-slate-800">
@@ -69,6 +68,15 @@ const StudentEnrollmentTableColumns = () => [
       );
     },
   },
+  {
+    key: "remarks",
+    label: "Remarks",
+    render: (row) => (
+      <span className="text-xs text-slate-700">
+        {row.remarks?.substring(0, 10) || "—"}
+      </span>
+    ),
+  }
 ];
 
 export default StudentEnrollmentTableColumns;

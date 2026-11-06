@@ -15,7 +15,17 @@ const Users = lazy(() => import("../screens/user-screens/User"));
 
 const Students = lazy(()=> import("../screens/student/Students"));
 const StudentEnrollments = lazy (()=> import("../screens/student/StudentEnrollment"));
+const StudentAttendance = lazy (()=> import("../screens/studentAttendance/StudentAttendance"));
 
+const AcademicSessions = lazy (()=> import("../screens/academic-sessions/AcademicSessions"));
+const Classes = lazy (()=> import("../screens/classes/Classes"));
+const Subjects = lazy (()=> import("../screens/subjects/subjects"));
+const Timetable = lazy (()=> import("../screens/timetable/timetable"));
+
+const User = lazy (()=> import("../screens/Users/Users"));
+const Staff = lazy (()=> import("../screens/staff/Staff"));
+const StaffAttendance = lazy(()=> import("../screens/staffAttendance/StaffAttendance"));
+const StaffLeaveRequests = lazy(()=> import("../screens/leaveRequest/LeaveRequest"));
 
 /** Small spinner shown ONLY in the content area. */
 const PageLoader = () => (
@@ -39,8 +49,19 @@ const PROTECTED_ROUTES = [
   // Administration
   { path: "administration/users", element: page(Users) },
 
+  {path: "users" , element: page(User)},
+  {path:"staff/employees", element: page(Staff)},
+  {path:"staff/attendance", element: page(StaffAttendance)},
+  {path: "/staff/leave-requests", element: page(StaffLeaveRequests)},
+
   {path: "students" , element: page(Students)},
-  {path: "student-promotion" , element: page(StudentEnrollments)}
+  {path: "student-promotion" , element: page(StudentEnrollments)},
+  {path: "operations/student-attendance" , element: page(StudentAttendance)},  
+
+  {path: "academic/session" , element: page(AcademicSessions)},
+  {path: "academics/classes" , element: page(Classes)},
+  {path: "academics/subjects" , element: page(Subjects)},
+  {path: "academics/timetable" , element: page(Timetable)},
 
 ];
 

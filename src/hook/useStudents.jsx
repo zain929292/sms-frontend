@@ -1,33 +1,23 @@
 
 import { useCallback, useEffect, useState } from "react";
 import { Eye, Pencil, Trash2 } from "lucide-react";
-import { toast } from "react-hot-toast";
+import Toast from "../utils/toast/toast.util";
 
 import api from "../redux/config/Api.redux";
 import { exportToExcel } from "../utils/export/Export.util";
 import { STUDENT_EXPORT_COLUMNS } from "../redux/api_data/studentData/students.data";
 
-const getStudentList = (response) => {
-  const payload = response?.data;
-
-  if (Array.isArray(payload?.data?.data)) return payload.data.data;
-  if (Array.isArray(payload?.data)) return payload.data;
-  if (Array.isArray(payload?.students)) return payload.students;
-  if (Array.isArray(payload)) return payload;
-
-  return [];
+const EMPTY_STATS = {
+  total: 0,
+  active: 0,
+  inactive: 0,
 };
 
-const getStudentEntity = (response) => {
-  const payload = response?.data;
-
-  return (
-    payload?.data?.student ??
-    payload?.student ??
-    payload?.data?.data ??
-    payload?.data ??
-    payload
-  );
+const EMPTY_PAGINATION = {
+  current_page: 1,
+  per_page: 10,
+  last_page: 1,
+  total: 0,
 };
 
 const getErrorMessage = (error, fallback) =>
@@ -36,15 +26,19 @@ const getErrorMessage = (error, fallback) =>
 const getValidationErrors = (error) => {
   const errors = error.response?.data?.errors;
 
-  if (!errors) return [];
-
-  return Object.values(errors).flat().filter(Boolean);
+  return errors
+    ? Object.values(errors).flat().filter(Boolean)
+    : [];
 };
 
 export default function useStudents() {
   const [students, setStudents] = useState([]);
-const [viewStudent, setViewStudent] = useState(null);
-const [isViewModalOpen, setIsViewModalOpen] = useState(false);
+  const [stats, setStats] = useState(EMPTY_STATS);
+  const [pagination, setPagination] = useState(EMPTY_PAGINATION);
+
+  const [viewStudent, setViewStudent] = useState(null);
+  const [isViewModalOpen, setIsViewModalOpen] = useState(false);
+
   const [loading, setLoading] = useState(false);
   const [saving, setSaving] = useState(false);
   const [deleting, setDeleting] = useState(false);
@@ -52,72 +46,95 @@ const [isViewModalOpen, setIsViewModalOpen] = useState(false);
   const [searchTerm, setSearchTerm] = useState("");
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
   const [selectedStudentId, setSelectedStudentId] = useState(null);
+
   const [currentPage, setCurrentPage] = useState(1);
   const [itemsPerPage, setItemsPerPage] = useState(10);
+
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [selectedStudent, setSelectedStudent] = useState(null);
 
-  // GET: Fetch students
-  const fetchStudents = useCallback(async (showLoader = true) => {
-    if (showLoader) setLoading(true);
+  // GET: Fetch students, backend filters, pagination and stats
+  const fetchStudents = useCallback(
+    async (params = {}, showLoader = true) => {
+      if (showLoader) setLoading(true);
 
-    try {
-      const response = await api.get("/student/details");
-      setStudents(getStudentList(response));
-    } catch (error) {
-      toast.error(getErrorMessage(error, "Failed to fetch students."));
-    } finally {
-      if (showLoader) setLoading(false);
-    }
-  }, []);
+      try {
+        const response = await api.get("/student/details", {
+          params: {
+            page: currentPage,
+            limit: itemsPerPage,
+            ...params,
+          },
+        });
 
+        const result = response.data;
+
+        setStudents(Array.isArray(result.data) ? result.data : []);
+
+        setPagination(
+          result.pagination ?? {
+            ...EMPTY_PAGINATION,
+            current_page: currentPage,
+            per_page: itemsPerPage,
+          }
+        );
+
+        setStats({
+          total: Number(result.stats?.total ?? 0),
+          active: Number(result.stats?.active ?? 0),
+          inactive: Number(result.stats?.inactive ?? 0),
+        });
+
+        return result;
+      } catch (error) {
+        Toast.error(
+          getErrorMessage(error, "Failed to fetch students.")
+        );
+
+        setStudents([]);
+        setPagination({
+          ...EMPTY_PAGINATION,
+          current_page: currentPage,
+          per_page: itemsPerPage,
+        });
+        setStats(EMPTY_STATS);
+
+        return null;
+      } finally {
+        if (showLoader) setLoading(false);
+      }
+    },
+    [currentPage, itemsPerPage]
+  );
+
+  // Backend StudentFilter supports name, admission_number,
+  // gender, city, state, status and religion.
   useEffect(() => {
-    fetchStudents();
-  }, [fetchStudents]);
+    const timer = setTimeout(() => {
+      const term = searchTerm.trim();
 
-  // Search and filtering
-  const term = searchTerm.trim().toLowerCase();
+      fetchStudents(term ? { name: term } : {});
+    }, 300);
 
-  const filteredStudents = !term
-    ? students
-    : students.filter((student) =>
-        [
-          student.id,
-          student.admission_number,
-          student.name,
-          student.gender,
-          student.dob,
-          student.religion,
-          student.address,
-          student.city,
-          student.state,
-          student.postal_code,
-        ].some((value) =>
-          String(value ?? "").toLowerCase().includes(term)
-        )
-      );
+    return () => clearTimeout(timer);
+  }, [fetchStudents, searchTerm]);
+
+  // Data already comes filtered and paginated from Laravel.
+  const filteredStudents = students;
 
   const displayedStudents = selectedStudentId
-    ? filteredStudents.filter(
-        (student) => String(student.id) === String(selectedStudentId)
+    ? students.filter(
+        (student) =>
+          String(student.id) === String(selectedStudentId)
       )
-    : filteredStudents;
+    : students;
+
+  const paginatedStudents = students;
 
   const totalPages = Math.max(
     1,
-    Math.ceil(displayedStudents.length / itemsPerPage)
+    Number(pagination.last_page ?? 1)
   );
-
-  const paginatedStudents = displayedStudents.slice(
-    (currentPage - 1) * itemsPerPage,
-    currentPage * itemsPerPage
-  );
-
-  const activeCount = displayedStudents.filter(
-    (student) => student.status === "active"
-  ).length;
-
-  const inactiveCount = displayedStudents.length - activeCount;
 
   // Modal handlers
   const openCreateModal = useCallback(() => {
@@ -151,44 +168,64 @@ const [isViewModalOpen, setIsViewModalOpen] = useState(false);
       setSaving(true);
 
       try {
-          const payload = {
-            admission_number: String(formData.admission_number ?? "").trim(),
-            name: String(formData.name ?? "").trim(),
-            father_name: String(formData.father_name ?? "").trim(),
-            phone: String(formData.phone ?? "").trim(),
-            dob: formData.dob || null,
-            gender: formData.gender || "male",
-            religion: String(formData.religion ?? "Islam").trim(),
-            address: String(formData.address ?? "").trim(),
-            city: String(formData.city ?? "").trim(),
-            state: String(formData.state ?? "").trim(),
-            postal_code: String(formData.postal_code ?? "").trim(),
-
-            admission_date: formData.admission_date || null,
-            previous_school: String(formData.previous_school ?? "").trim(),
-            previous_class: String(formData.previous_class ?? "").trim(),
-            status: formData.status || "active",
-            remarks: String(formData.remarks ?? "").trim(),
-          };
+        const payload = {
+          admission_number: String(
+            formData.admission_number ?? ""
+          ).trim(),
+          name: String(formData.name ?? "").trim(),
+          father_name: String(formData.father_name ?? "").trim(),
+          phone: String(formData.phone ?? "").trim(),
+          dob: formData.dob || null,
+          gender: formData.gender || "male",
+          religion: String(formData.religion ?? "Islam").trim(),
+          address: String(formData.address ?? "").trim(),
+          city: String(formData.city ?? "").trim(),
+          state: String(formData.state ?? "").trim(),
+          postal_code: String(formData.postal_code ?? "").trim(),
+          admission_date: formData.admission_date || null,
+          previous_school: String(
+            formData.previous_school ?? ""
+          ).trim(),
+          previous_class: String(
+            formData.previous_class ?? ""
+          ).trim(),
+          status: formData.status || "active",
+          remarks: String(formData.remarks ?? "").trim(),
+        };
 
         if (selectedStudent?.id) {
-          await api.put(`/student/update/${selectedStudent.id}`, payload);
-          toast.success("Student updated successfully.");
+          await api.put(
+            `/student/update/${selectedStudent.id}`,
+            payload
+          );
+          Toast.success("Student updated successfully.");
         } else {
           await api.post("/student/create", payload);
-          toast.success("Student created successfully.");
+          Toast.success("Student created successfully.");
         }
 
         closeModal();
+        setSelectedStudentId(null);
+        setSearchTerm("");
         setCurrentPage(1);
-        await fetchStudents(false);
+
+        // Refresh after a successful save.
+        await fetchStudents(
+          {
+            page: 1,
+            limit: itemsPerPage,
+          },
+          false
+        );
       } catch (error) {
         const validationErrors = getValidationErrors(error);
 
         if (validationErrors.length) {
-          validationErrors.forEach((message) => toast.error(message));
+          validationErrors.forEach((message) =>
+            Toast.error(message)
+          );
         } else {
-          toast.error(
+          Toast.error(
             getErrorMessage(
               error,
               selectedStudent
@@ -201,19 +238,21 @@ const [isViewModalOpen, setIsViewModalOpen] = useState(false);
         setSaving(false);
       }
     },
-    [selectedStudent, closeModal, fetchStudents]
+    [selectedStudent, closeModal, fetchStudents, itemsPerPage]
   );
 
   // DELETE: Delete student
   const handleDelete = useCallback(
     async (student) => {
       if (!student?.id) {
-        toast.error("Student ID is missing.");
+        Toast.error("Student ID is missing.");
         return;
       }
 
       const confirmed = window.confirm(
-        `Are you sure you want to delete ${student.name || "this student"}?`
+        `Are you sure you want to delete ${
+          student.name || "this student"
+        }?`
       );
 
       if (!confirmed) return;
@@ -223,29 +262,31 @@ const [isViewModalOpen, setIsViewModalOpen] = useState(false);
       try {
         await api.delete(`/student/delete/${student.id}`);
 
-        setSelectedStudentId((current) =>
-          String(current) === String(student.id) ? null : current
-        );
+        Toast.success("Student deleted successfully.");
 
-        setSearchTerm((current) =>
-          current === student.name ? "" : current
-        );
-
+        setSelectedStudentId(null);
+        setSearchTerm("");
         setCurrentPage(1);
-        toast.success("Student deleted successfully.");
 
-        await fetchStudents(false);
+        await fetchStudents(
+          {
+            page: 1,
+            limit: itemsPerPage,
+          },
+          false
+        );
       } catch (error) {
-        toast.error(
+        Toast.error(
           getErrorMessage(error, "Failed to delete student.")
         );
       } finally {
         setDeleting(false);
       }
     },
-    [fetchStudents]
+    [fetchStudents, itemsPerPage]
   );
 
+  // Search input
   const handleSearchChange = useCallback((event) => {
     setSearchTerm(event.target.value);
     setSelectedStudentId(null);
@@ -272,9 +313,10 @@ const [isViewModalOpen, setIsViewModalOpen] = useState(false);
     setCurrentPage(1);
   }, []);
 
+  // Export current displayed results
   const handleExport = useCallback(() => {
     if (!displayedStudents.length) {
-      toast.error("No students to export.");
+      Toast.error("No students to export.");
       return;
     }
 
@@ -284,26 +326,32 @@ const [isViewModalOpen, setIsViewModalOpen] = useState(false);
       STUDENT_EXPORT_COLUMNS
     );
 
-    toast.success(`Exported ${displayedStudents.length} students.`);
+    Toast.success(
+      `Exported ${displayedStudents.length} students.`
+    );
   }, [displayedStudents]);
 
+  // Table row actions
   const getRowActions = useCallback(
     (row) => [
       {
         label: "View Student",
         icon: <Eye size={14} />,
-        onClick: (selectedRow) => openViewModal(selectedRow || row),
+        onClick: (selectedRow) =>
+          openViewModal(selectedRow || row),
       },
       {
         label: "Edit Student",
         icon: <Pencil size={14} />,
-        onClick: (selectedRow) => openEditModal(selectedRow || row),
+        onClick: (selectedRow) =>
+          openEditModal(selectedRow || row),
       },
       {
         label: "Delete Student",
         icon: <Trash2 size={14} />,
         variant: "danger",
-        onClick: (selectedRow) => handleDelete(selectedRow || row),
+        onClick: (selectedRow) =>
+          handleDelete(selectedRow || row),
       },
     ],
     [openViewModal, openEditModal, handleDelete]
@@ -311,26 +359,34 @@ const [isViewModalOpen, setIsViewModalOpen] = useState(false);
 
   return {
     students,
+    stats,
+    pagination,
     loading,
     saving,
     deleting,
+
     searchTerm,
     isDropdownOpen,
     setIsDropdownOpen,
+
     filteredStudents,
     displayedStudents,
     paginatedStudents,
+
     totalPages,
     currentPage,
     setCurrentPage,
     itemsPerPage,
     setItemsPerPage,
-    activeCount,
-    inactiveCount,
+
+    activeCount: stats.active,
+    inactiveCount: stats.inactive,
+
     isModalOpen,
     selectedStudent,
     viewStudent,
     isViewModalOpen,
+
     openViewModal,
     closeViewModal,
     openCreateModal,
@@ -338,13 +394,16 @@ const [isViewModalOpen, setIsViewModalOpen] = useState(false);
     closeModal,
     handleSaveStudent,
     handleDelete,
+
     handleSearchChange,
     handleClearSearch,
     handleSelectStudent,
     handleClearAllFilters,
+
     handleExport,
     getRowActions,
     fetchStudents,
+
     hasFilters: Boolean(searchTerm) || Boolean(selectedStudentId),
   };
 }

@@ -9,7 +9,7 @@ const UserProfileModal = ({
   isOpen,
   onClose,
   userName: fallbackName = "Sana Mahmood",
-  userRole: fallbackRole = "Hospital Administrator",
+  userRole: fallbackRole = "School Administrator",
   onSignOut,
 }) => {
   const dispatch = useDispatch();

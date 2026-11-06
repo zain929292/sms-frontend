@@ -12,16 +12,16 @@ export const STATIC_GROUPS = [
     moduleName: "Student Management",
     items: [
       { label: "Students", to: "/students", icon: GraduationCap },
-      { label: "Admissions", to: "/admissions", icon: UserPlus },
+      // { label: "Admissions", to: "/admissions", icon: UserPlus },
       { label: "Student Promotion", to: "/student-promotion", icon: Award },
     ],
   },
   {
     moduleName: "Academics",
     items: [
-      { label: "Academic Sessions", to: "/academics/sessions", icon: CalendarDays },
+      { label: "Academic Sessions", to: "/academic/session", icon: CalendarDays },
       { label: "Classes & Sections", to: "/academics/classes", icon: Building },
-      { label: "Classrooms", to: "/academics/classrooms", icon: School },
+      // { label: "Classrooms", to: "/academics/classrooms", icon: School },
       { label: "Subjects", to: "/academics/subjects", icon: BookMarked },
       { label: "Timetable", to: "/academics/timetable", icon: Clock },
       { label: "Assignments", to: "/academics/assignments", icon: NotebookPen },
@@ -31,7 +31,7 @@ export const STATIC_GROUPS = [
   {
     moduleName: "Staff Management",
     items: [
-      { label: "Teachers", to: "/staff/teachers", icon: Users },
+      { label: "Users", to: "/users", icon: Users },
       { label: "Staff", to: "/staff/employees", icon: UserCheck },
       { label: "Attendance", to: "/staff/attendance", icon: CalendarCheck },
       { label: "Leave Requests", to: "/staff/leave-requests", icon: CalendarClock },

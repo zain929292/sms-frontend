@@ -1,6 +1,8 @@
-
 import { useEffect, useState } from "react";
-import { X } from "lucide-react";
+import { GraduationCap } from "lucide-react";
+
+import ModalShell from "../../../shared/ModalShell.shared";
+import FormField from "../../../shared/FormField.shared";
 
 const EMPTY_FORM = {
   admission_number: "",
@@ -21,302 +23,306 @@ const EMPTY_FORM = {
   remarks: "",
 };
 
-const StudentModal = ({ isOpen, onClose, studentData, onSubmit }) => {
-  const [form, setForm] = useState(EMPTY_FORM);
+const GENDER_OPTIONS = [
+  { value: "male", label: "Male" },
+  { value: "female", label: "Female" },
+  { value: "other", label: "Other" },
+];
+
+const STATUS_OPTIONS = [
+  { value: "active", label: "Active" },
+  { value: "inactive", label: "Inactive" },
+  { value: "passout", label: "Passout" },
+];
+
+const StudentModal = ({
+  isOpen,
+  onClose,
+  studentData,
+  onSubmit,
+  saving = false,
+}) => {
+  const [form, setForm] = useState({ ...EMPTY_FORM });
+  const [errors, setErrors] = useState({});
 
   useEffect(() => {
+    if (!isOpen) return;
+
     if (studentData) {
       setForm({
         ...EMPTY_FORM,
         ...studentData,
-        dob: studentData.dob?.substring(0, 10) || "",
+        dob: studentData.dob?.substring(0, 10) ?? "",
+        admission_date:
+          studentData.admission_date?.substring(0, 10) ?? "",
       });
     } else {
       setForm({ ...EMPTY_FORM });
     }
-  }, [studentData, isOpen]);
 
-  if (!isOpen) return null;
+    setErrors({});
+  }, [studentData, isOpen]);
 
   const handleChange = (event) => {
     const { name, value } = event.target;
-    setForm((current) => ({ ...current, [name]: value }));
+
+    setForm((previous) => ({
+      ...previous,
+      [name]: value,
+    }));
+
+    setErrors((previous) => ({
+      ...previous,
+      [name]: "",
+    }));
   };
 
-  const handleSubmit = (event) => {
+  const validateForm = () => {
+    const nextErrors = {};
+
+    if (!form.admission_number.trim()) {
+      nextErrors.admission_number = "Admission number is required.";
+    }
+
+    if (!form.name.trim()) {
+      nextErrors.name = "Student name is required.";
+    }
+
+    if (!form.father_name.trim()) {
+      nextErrors.father_name = "Father name is required.";
+    }
+
+    setErrors(nextErrors);
+
+    return Object.keys(nextErrors).length === 0;
+  };
+
+  const handleSubmit = async (event) => {
     event.preventDefault();
 
-    onSubmit({
+    if (!validateForm()) return;
+
+    const payload = {
       ...form,
-    admission_number: String(form.admission_number ?? "").trim(),
-    name: String(form.name ?? "").trim(),
-    father_name: String(form.father_name ?? "").trim(),
-    phone: String(form.phone ?? "").trim(),
-    dob: form.dob || null,
-    gender: form.gender || "male",
-    religion: String(form.religion ?? "").trim(),
-    address: String(form.address ?? "").trim(),
-    city: String(form.city ?? "").trim(),
-    state: String(form.state ?? "").trim(),
-    postal_code: String(form.postal_code ?? "").trim(),
-    admission_date: form.admission_date || null,
-    previous_school: String(form.previous_school ?? "").trim(),
-    previous_class: String(form.previous_class ?? "").trim(),
-    status: form.status || "active",
-    remarks: String(form.remarks ?? "").trim(),
-    });
+      admission_number: String(form.admission_number ?? "").trim(),
+      name: String(form.name ?? "").trim(),
+      father_name: String(form.father_name ?? "").trim(),
+      phone: String(form.phone ?? "").trim(),
+      dob: form.dob || null,
+      gender: form.gender || "male",
+      religion: String(form.religion ?? "").trim(),
+      address: String(form.address ?? "").trim(),
+      city: String(form.city ?? "").trim(),
+      state: String(form.state ?? "").trim(),
+      postal_code: String(form.postal_code ?? "").trim(),
+      admission_date: form.admission_date || null,
+      previous_school: String(form.previous_school ?? "").trim(),
+      previous_class: String(form.previous_class ?? "").trim(),
+      status: form.status || "active",
+      remarks: String(form.remarks ?? "").trim(),
+    };
+
+    await onSubmit(payload);
   };
 
-  const inputClass =
-    "mt-1 w-full rounded-lg border border-[var(--gray)] bg-white px-3 py-2.5 text-sm text-[var(--dark)] outline-none transition focus:border-[var(--primary)] focus:ring-2 focus:ring-teal-100";
-
   return (
-    <div
-      className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4"
-      onMouseDown={(event) => {
-        if (event.target === event.currentTarget) onClose();
-      }}
+    <ModalShell
+      isOpen={isOpen}
+      onClose={onClose}
+      title={studentData ? "Edit Student" : "Add Student"}
+      subtitle="Enter the student's basic information."
+      icon={<GraduationCap size={22} />}
+      maxWidth="max-w-3xl"
+      disabled={saving}
     >
-      <div
-        role="dialog"
-        aria-modal="true"
-        aria-labelledby="student-modal-title"
-        className="max-h-[90vh] w-full max-w-2xl overflow-y-auto rounded-2xl bg-white shadow-xl"
-      >
-        <div className="flex items-center justify-between border-b border-[var(--gray)] px-5 py-4 sm:px-6">
-          <div>
-            <h2
-              id="student-modal-title"
-              className="text-lg font-bold text-slate-900"
+      <form onSubmit={handleSubmit} className="space-y-5 p-5 sm:p-6">
+        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+          <FormField
+            label="Admission Number"
+            name="admission_number"
+            value={form.admission_number}
+            onChange={handleChange}
+            error={errors.admission_number}
+            placeholder="e.g. ADM-004"
+            required
+          />
+
+          <FormField
+            label="Student Name"
+            name="name"
+            value={form.name}
+            onChange={handleChange}
+            error={errors.name}
+            placeholder="Enter student name"
+            required
+          />
+
+          <FormField
+            label="Father Name"
+            name="father_name"
+            value={form.father_name}
+            onChange={handleChange}
+            error={errors.father_name}
+            placeholder="Enter father's name"
+            required
+          />
+
+          <FormField
+            label="Phone Number"
+            name="phone"
+            type="tel"
+            value={form.phone}
+            onChange={handleChange}
+            placeholder="e.g. 03001234567"
+          />
+
+          <FormField
+            label="Gender"
+            name="gender"
+            value={form.gender}
+            onChange={handleChange}
+            options={GENDER_OPTIONS}
+            required
+          />
+
+          <FormField
+            label="Date of Birth"
+            name="dob"
+            type="date"
+            value={form.dob}
+            onChange={handleChange}
+          />
+
+          <FormField
+            label="Admission Date"
+            name="admission_date"
+            type="date"
+            value={form.admission_date}
+            onChange={handleChange}
+          />
+
+          <FormField
+            label="Previous School"
+            name="previous_school"
+            value={form.previous_school}
+            onChange={handleChange}
+            placeholder="Enter previous school"
+          />
+
+          <FormField
+            label="Previous Class"
+            name="previous_class"
+            value={form.previous_class}
+            onChange={handleChange}
+            placeholder="Enter previous class"
+          />
+
+          <FormField
+            label="Religion"
+            name="religion"
+            value={form.religion}
+            onChange={handleChange}
+            placeholder="Enter religion"
+          />
+
+          <FormField
+            label="City"
+            name="city"
+            value={form.city}
+            onChange={handleChange}
+            placeholder="Enter city"
+          />
+
+          <FormField
+            label="State"
+            name="state"
+            value={form.state}
+            onChange={handleChange}
+            placeholder="Enter state"
+          />
+
+          <FormField
+            label="Postal Code"
+            name="postal_code"
+            value={form.postal_code}
+            onChange={handleChange}
+            placeholder="Enter postal code"
+          />
+
+          <FormField
+            label="Status"
+            name="status"
+            value={form.status}
+            onChange={handleChange}
+            options={STATUS_OPTIONS}
+            required
+          />
+
+          <div className="sm:col-span-2">
+            <label
+              htmlFor="student-address"
+              className="mb-1.5 block text-sm font-medium text-slate-700"
             >
-              {studentData ? "Edit Student" : "Add Student"}
-            </h2>
-            <p className="mt-1 text-sm text-slate-500">
-              Enter the student's basic information.
-            </p>
+              Address
+            </label>
+
+            <textarea
+              id="student-address"
+              name="address"
+              value={form.address}
+              onChange={handleChange}
+              rows={3}
+              disabled={saving}
+              placeholder="Enter complete address"
+              className="w-full rounded-xl border border-slate-200 bg-slate-50/50 px-4 py-3 text-sm outline-none transition focus:border-teal-600 focus:ring-2 focus:ring-teal-600/10 disabled:opacity-60"
+            />
           </div>
 
+          <div className="sm:col-span-2">
+            <label
+              htmlFor="student-remarks"
+              className="mb-1.5 block text-sm font-medium text-slate-700"
+            >
+              Remarks
+            </label>
+
+            <textarea
+              id="student-remarks"
+              name="remarks"
+              value={form.remarks}
+              onChange={handleChange}
+              rows={3}
+              disabled={saving}
+              placeholder="Enter remarks"
+              className="w-full rounded-xl border border-slate-200 bg-slate-50/50 px-4 py-3 text-sm outline-none transition focus:border-teal-600 focus:ring-2 focus:ring-teal-600/10 disabled:opacity-60"
+            />
+          </div>
+        </div>
+
+        <div className="flex flex-col-reverse gap-3 border-t border-slate-100 pt-4 sm:flex-row sm:justify-end">
           <button
             type="button"
             onClick={onClose}
-            aria-label="Close modal"
-            className="rounded-lg p-2 text-slate-500 transition hover:bg-slate-100 hover:text-slate-800"
+            disabled={saving}
+            className="rounded-lg border border-slate-200 px-4 py-2.5 text-sm font-semibold text-slate-600 transition hover:bg-slate-50 disabled:opacity-50"
           >
-            <X size={20} />
+            Cancel
+          </button>
+
+          <button
+            type="submit"
+            disabled={saving}
+            className="rounded-lg bg-[var(--primary)] px-5 py-2.5 text-sm font-semibold text-white transition hover:bg-[var(--secondary)] disabled:cursor-not-allowed disabled:opacity-60"
+          >
+            {saving
+              ? "Saving..."
+              : studentData
+                ? "Update Student"
+                : "Save Student"}
           </button>
         </div>
-
-        <form onSubmit={handleSubmit} className="space-y-5 px-5 py-5 sm:px-6">
-          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-            <label className="text-sm font-medium text-slate-700">
-              Admission Number *
-              <input
-                className={inputClass}
-                name="admission_number"
-                value={form.admission_number}
-                onChange={handleChange}
-                placeholder="e.g. ADM-004"
-                required
-              />
-            </label>
-
-            <label className="text-sm font-medium text-slate-700">
-              Student Name *
-              <input
-                className={inputClass}
-                name="name"
-                value={form.name}
-                onChange={handleChange}
-                placeholder="Enter student name"
-                required
-              />
-            </label>
-
-            <label className="text-sm font-medium text-slate-700">
-              Father Name *
-              <input
-                className={inputClass}
-                name="father_name"
-                value={form.father_name}
-                onChange={handleChange}
-                placeholder="Enter father's name"
-                required
-              />
-            </label>
-
-            <label className="text-sm font-medium text-slate-700">
-              Phone Number
-              <input
-                className={inputClass}
-                type="tel"
-                name="phone"
-                value={form.phone}
-                onChange={handleChange}
-                placeholder="e.g. 03001234567"
-              />
-            </label>
-
-            <label className="text-sm font-medium text-slate-700">
-              Gender *
-              <select
-                className={inputClass}
-                name="gender"
-                value={form.gender}
-                onChange={handleChange}
-                required
-              >
-                <option value="male">male</option>
-                <option value="Female">female</option>
-                <option value="Other">other</option>
-              </select>
-            </label>
-
-            <label className="text-sm font-medium text-slate-700">
-              Date of Birth
-              <input
-                className={inputClass}
-                type="date"
-                name="dob"
-                value={form.dob || ""}
-                onChange={handleChange}
-              />
-            </label>
-
-            <label className="text-sm font-medium text-slate-700">
-              Admission Date
-              <input
-                className={inputClass}
-                type="date"
-                name="admission_date"
-                value={form.admission_date || ""}
-                onChange={handleChange}
-              />
-            </label>
-
-            <label className="text-sm font-medium text-slate-700">
-              Previous School
-              <input
-                className={inputClass}
-                name="previous_school"
-                value={form.previous_school}
-                onChange={handleChange}
-                placeholder="Enter previous school"
-              />
-            </label>
-
-            <label className="text-sm font-medium text-slate-700">
-              Previous Class
-              <input
-                className={inputClass}
-                name="previous_class"
-                value={form.previous_class}
-                onChange={handleChange}
-                placeholder="Enter previous class"
-              />
-            </label>
-
-
-            <label className="text-sm font-medium text-slate-700">
-              Religion
-              <input
-                className={inputClass}
-                name="religion"
-                value={form.religion}
-                onChange={handleChange}
-                placeholder="Enter religion"
-              />
-            </label>
-
-            <label className="text-sm font-medium text-slate-700">
-              City
-              <input
-                className={inputClass}
-                name="city"
-                value={form.city}
-                onChange={handleChange}
-                placeholder="Enter city"
-              />
-            </label>
-
-            <label className="text-sm font-medium text-slate-700">
-              State
-              <input
-                className={inputClass}
-                name="state"
-                value={form.state}
-                onChange={handleChange}
-                placeholder="Enter state"
-              />
-            </label>
-
-            <label className="text-sm font-medium text-slate-700">
-              Postal Code
-              <input
-                className={inputClass}
-                name="postal_code"
-                value={form.postal_code}
-                onChange={handleChange}
-                placeholder="Enter postal code"
-              />
-            </label>
-            <label className="text-sm font-medium text-slate-700">
-              Status
-              <select
-                className={inputClass}
-                name="status"
-                value={form.status}
-                onChange={handleChange}
-              >
-                <option value="active">Active</option>
-                <option value="inactive">Inactive</option>
-                <option value="passout">Passout</option>
-              </select>
-            </label>
-            <label className="text-sm font-medium text-slate-700 sm:col-span-2">
-              Address
-              <textarea
-                className={inputClass}
-                name="address"
-                value={form.address}
-                onChange={handleChange}
-                placeholder="Enter complete address"
-                rows={3}
-              />
-            </label>
-
-            <label className="text-sm font-medium text-slate-700 sm:col-span-2">
-              Remarks
-              <textarea
-                className={inputClass}
-                name="remarks"
-                value={form.remarks}
-                onChange={handleChange}
-                placeholder="Enter remarks"
-                rows={3}
-              />
-            </label>
-
-          </div>
-
-          <div className="flex flex-col-reverse gap-3 border-t border-[var(--gray)] pt-4 sm:flex-row sm:justify-end">
-            <button
-              type="button"
-              onClick={onClose}
-              className="rounded-lg border border-[var(--gray)] px-4 py-2.5 text-sm font-semibold text-slate-700 transition hover:bg-slate-50"
-            >
-              Cancel
-            </button>
-
-            <button
-              type="submit"
-              className="rounded-lg bg-[var(--primary)] px-5 py-2.5 text-sm font-semibold text-white transition hover:bg-[var(--secondary)]"
-            >
-              {studentData ? "Update Student" : "Save Student"}
-            </button>
-          </div>
-        </form>
-      </div>
-    </div>
+      </form>
+    </ModalShell>
   );
 };
 

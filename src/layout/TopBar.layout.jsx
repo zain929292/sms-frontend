@@ -16,8 +16,8 @@ const getInitials = (name) => {
 
 const Topbar = ({
   onToggleSidebar,
-  userName: fallbackName = "Sana Mahmood",
-  userRole: fallbackRole = "Hospital Administrator",
+  userName: fallbackName = "Administrator",
+  userRole: fallbackRole = "School Administrator",
   onSignOut,
 }) => {
   const [isProfileOpen, setIsProfileOpen] = useState(false);
