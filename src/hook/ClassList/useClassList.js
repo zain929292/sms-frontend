@@ -1,4 +1,3 @@
-
 import { useCallback, useEffect, useState } from "react";
 import { getClasses } from "../../redux/api_data/classApi/classApi";
 import toast from "react-hot-toast";
@@ -11,9 +10,14 @@ const INITIAL_PAGINATION = {
   total: 0,
 };
 
-const useClassList = () => {
+const useClassList = (initialPage = 1, initialLimit = 10) => {
   const [classes, setClasses] = useState([]);
-  const [pagination, setPagination] = useState(INITIAL_PAGINATION);
+  const [pagination, setPagination] = useState({
+    ...INITIAL_PAGINATION,
+    current_page: initialPage,
+    per_page: initialLimit,
+  });
+
   const [loading, setLoading] = useState(false);
 
   const fetchClasses = useCallback(async (page = 1, limit = 10) => {
@@ -40,23 +44,20 @@ const useClassList = () => {
           total: list.length,
         }
       );
+
+      return list;
     } catch (error) {
       toast.error(errorMessage(error));
+      return [];
     } finally {
       setLoading(false);
     }
   }, []);
 
+  // Initial API call only
   useEffect(() => {
-    fetchClasses(
-      pagination.current_page,
-      pagination.per_page
-    );
-  }, [
-    fetchClasses,
-    pagination.current_page,
-    pagination.per_page,
-  ]);
+    fetchClasses(initialPage, initialLimit);
+  }, [fetchClasses, initialPage, initialLimit]);
 
   return {
     classes,

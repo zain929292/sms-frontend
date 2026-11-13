@@ -1,4 +1,31 @@
-import { LayoutDashboard, GraduationCap, Users, UserCheck, CalendarCheck, DollarSign, ClipboardList, Building, FileText, Settings, Bell, ShieldCheck, KeyRound, Layers, Files, CalendarDays, Clock, Library, Bus, Wallet, CreditCard, BookMarked, NotebookPen, CalendarClock, Award, History, School, UserPlus } from "lucide-react";
+
+import {
+  LayoutDashboard,
+  GraduationCap,
+  Users,
+  UserCheck,
+  CalendarCheck,
+  DollarSign,
+  ClipboardList,
+  Building,
+  FileText,
+  Settings,
+  Bell,
+  ShieldCheck,
+  KeyRound,
+  Layers,
+  Files,
+  CalendarDays,
+  Clock,
+  Wallet,
+  CreditCard,
+  BookMarked,
+  NotebookPen,
+  CalendarClock,
+  Award,
+  History,
+  School,
+} from "lucide-react";
 
 export const STATIC_GROUPS = [
   {
@@ -8,58 +35,55 @@ export const STATIC_GROUPS = [
       { label: "Announcements", to: "/overview/announcements", icon: Bell },
     ],
   },
+
   {
     moduleName: "Student Management",
     items: [
-      { label: "Students", to: "/students", icon: GraduationCap },
-      // { label: "Admissions", to: "/admissions", icon: UserPlus },
-      { label: "Student Promotion", to: "/student-promotion", icon: Award },
+      { label: "Student Admission", to: "/students/admission", icon: GraduationCap },
+      { label: "Students", to: "/students", icon: Users },
+      { label: "Student Attendance", to: "/operations/student-attendance", icon: CalendarCheck },
     ],
   },
+
   {
     moduleName: "Academics",
     items: [
       { label: "Academic Sessions", to: "/academic/session", icon: CalendarDays },
       { label: "Classes & Sections", to: "/academics/classes", icon: Building },
-      // { label: "Classrooms", to: "/academics/classrooms", icon: School },
       { label: "Subjects", to: "/academics/subjects", icon: BookMarked },
       { label: "Timetable", to: "/academics/timetable", icon: Clock },
       { label: "Assignments", to: "/academics/assignments", icon: NotebookPen },
       { label: "Examinations", to: "/academics/exams", icon: ClipboardList },
     ],
   },
+
   {
     moduleName: "Staff Management",
     items: [
-      { label: "Users", to: "/users", icon: Users },
-      { label: "Staff", to: "/staff/employees", icon: UserCheck },
-      { label: "Attendance", to: "/staff/attendance", icon: CalendarCheck },
+      { label: "Staff", to: "/users", icon: Users },
+      { label: "Staff Attendance", to: "/staff/attendance", icon: UserCheck },
       { label: "Leave Requests", to: "/staff/leave-requests", icon: CalendarClock },
     ],
   },
+
   {
     moduleName: "Finance",
     items: [
-      { label: "Fee Management", to: "/finance/fees", icon: DollarSign },
       { label: "Fee Structure", to: "/finance/fee-structure", icon: CreditCard },
-      { label: "Expenses", to: "/finance/expenses", icon: Wallet },
+      { label: "Fee Management", to: "/finance/fees", icon: DollarSign },
+      { label: "Salary Structure", to: "/staff/salary-structure", icon: Wallet },
       { label: "Payroll", to: "/finance/payroll", icon: DollarSign },
+      { label: "Expenses", to: "/finance/expenses", icon: Wallet },
     ],
   },
-  {
-    moduleName: "Operations",
-    items: [
-      { label: "Student Attendance", to: "/operations/student-attendance", icon: CalendarCheck },
-      { label: "Library", to: "/operations/library", icon: Library },
-      { label: "Transport", to: "/operations/transport", icon: Bus },
-    ],
-  },
+
   {
     moduleName: "Reports",
     items: [
       { label: "Reports", to: "/reports", icon: FileText },
     ],
   },
+
   {
     moduleName: "Roles & Permissions",
     items: [
@@ -69,6 +93,7 @@ export const STATIC_GROUPS = [
       { label: "Pages", to: "/access-control/pages", icon: Files },
     ],
   },
+
   {
     moduleName: "System",
     items: [

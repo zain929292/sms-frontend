@@ -1,14 +1,16 @@
 
 import { useState } from "react";
+
 import {
   Pencil,
   Trash2,
-  RefreshCw,
   Clock,
   UserRound,
   Plus,
   CalendarDays,
   CalendarX,
+  Search,
+  RotateCcw,
 } from "lucide-react";
 
 const DAYS = ["regular", "friday"];
@@ -24,18 +26,20 @@ const TimetableTable = ({
   periods = [],
   classes = [],
   loading = false,
-  onRefresh,
   onEdit,
   onDelete,
   onAdd,
   selectedDay,
   onDayChange,
+  searchTerm = "",
+  onSearchChange,
+  onClear,
+  hasFilters = false,
 }) => {
   const [localDay, setLocalDay] = useState("regular");
 
   const activeDay = selectedDay ?? localDay;
 
-  // Handle schedule selection
   const handleDayChange = (day) => {
     if (onDayChange) {
       onDayChange(day);
@@ -71,7 +75,7 @@ const TimetableTable = ({
         ).values(),
       ];
 
-  // Find timetable entry by class, schedule and period
+  // Find timetable entry
   const getTimetableEntry = (classId, slot) =>
     timetables.find(
       (item) =>
@@ -83,8 +87,9 @@ const TimetableTable = ({
   return (
     <div className="overflow-hidden rounded-xl border border-slate-200 bg-white">
 
-      {/* Header */}
+      {/* Header with Search */}
       <div className="flex flex-wrap items-center justify-between gap-3 border-b border-slate-100 px-4 py-3">
+
         <div>
           <h3 className="text-sm font-semibold text-slate-800">
             Class Timetable
@@ -95,18 +100,38 @@ const TimetableTable = ({
           </p>
         </div>
 
-        <button
-          type="button"
-          onClick={onRefresh}
-          disabled={loading}
-          className="inline-flex items-center gap-1.5 rounded-lg border border-slate-200 px-3 py-2 text-xs font-medium text-slate-600 transition hover:bg-teal-50 hover:text-teal-700 disabled:opacity-50"
-        >
-          <RefreshCw
-            size={14}
-            className={loading ? "animate-spin" : ""}
-          />
-          Refresh
-        </button>
+        <div className="flex items-center gap-2">
+
+          {/* Compact Search */}
+          <div className="relative w-full sm:w-64">
+            <Search
+              size={14}
+              className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400"
+            />
+
+            <input
+              type="text"
+              value={searchTerm}
+              onChange={(e) =>
+                onSearchChange?.(e.target.value)
+              }
+              placeholder="Search teacher or subject..."
+              className="h-9 w-full rounded-lg border border-slate-200 bg-white pl-9 pr-3 text-xs text-slate-700 outline-none transition placeholder:text-slate-400 focus:border-teal-500 focus:ring-2 focus:ring-teal-100"
+            />
+          </div>
+
+          {/* Reset Search */}
+          {hasFilters && (
+            <button
+              type="button"
+              onClick={onClear}
+              title="Reset Search"
+              className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg border border-slate-200 text-slate-500 transition hover:border-red-200 hover:bg-red-50 hover:text-red-600"
+            >
+              <RotateCcw size={14} />
+            </button>
+          )}
+        </div>
       </div>
 
       {/* Schedule Tabs */}
@@ -141,7 +166,11 @@ const TimetableTable = ({
 
       {/* Selected Schedule Information */}
       <div className="flex items-center gap-2 border-b border-slate-100 bg-teal-50/40 px-4 py-2">
-        <CalendarDays size={14} className="text-teal-700" />
+
+        <CalendarDays
+          size={14}
+          className="text-teal-700"
+        />
 
         <p className="text-xs text-slate-600">
           Showing{" "}
@@ -153,23 +182,26 @@ const TimetableTable = ({
         </p>
       </div>
 
-      {/* Timetable Grid */}
-      <div className="overflow-x-auto">
+      {/* Timetable Scroll Container */}
+      <div className="max-h-[calc(100vh-230px)] overflow-auto">
+
         <table className="w-full min-w-max border-collapse text-left">
 
-          {/* Table Header */}
-          <thead>
+          {/* Sticky Period Header */}
+          <thead className="sticky top-0 z-30">
             <tr className="bg-slate-50">
 
-              <th className="sticky left-0 z-10 min-w-28 border-b border-r border-slate-200 bg-slate-50 px-4 py-3 text-xs font-semibold text-slate-700">
+              <th className="sticky left-0 top-0 z-40 min-w-28 border-b border-r border-slate-200 bg-slate-50 px-4 py-3 text-xs font-semibold text-slate-700">
                 Class
               </th>
 
               {timeSlots.map((slot) => (
                 <th
                   key={slot.id}
-                  className={`min-w-44 border-b border-r border-slate-200 px-3 py-3 text-center ${
-                    isBreak(slot) ? "bg-amber-50" : ""
+                  className={`sticky top-0 z-30 min-w-44 border-b border-r border-slate-200 px-3 py-3 text-center ${
+                    isBreak(slot)
+                      ? "bg-amber-50"
+                      : "bg-slate-50"
                   }`}
                 >
                   <div
@@ -183,7 +215,10 @@ const TimetableTable = ({
                   </div>
 
                   <div className="mt-1 flex items-center justify-center gap-1.5 text-xs font-medium text-slate-500">
-                    <Clock size={13} className="text-teal-600" />
+                    <Clock
+                      size={13}
+                      className="text-teal-600"
+                    />
 
                     {formatTime(slot.start_time)} -{" "}
                     {formatTime(slot.end_time)}
@@ -197,10 +232,13 @@ const TimetableTable = ({
           {/* Table Body */}
           <tbody>
             {classRows.map((classItem) => (
-              <tr key={classItem.id}>
+              <tr
+                key={classItem.id}
+                className="group"
+              >
 
-                {/* Class Name */}
-                <td className="sticky left-0 z-10 border-b border-r border-slate-200 bg-white px-4 py-3">
+                {/* Sticky Class Name */}
+                <td className="sticky left-0 z-20 border-b border-r border-slate-200 bg-white px-4 py-3 group-hover:bg-teal-50">
                   <span className="text-xs font-semibold text-slate-800">
                     {classItem.name}
                   </span>

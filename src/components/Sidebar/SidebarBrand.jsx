@@ -13,7 +13,7 @@ export const SidebarBrand = ({ isCollapsed }) => (
       </div>
       {!isCollapsed && (
         <div className="flex flex-col truncate">
-          <span className="font-bold text-base text-white">EduCore SMS</span>
+          <span className="font-bold text-base text-white">Al Qamar School</span>
           <span className="text-xs text-slate-400">School Admin</span>
         </div>
       )}

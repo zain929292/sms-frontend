@@ -44,14 +44,16 @@ export const StatCard = memo(
           </div>
         )}
 
-        <Link
-          to={to}
-          className={`${
-            progress !== undefined ? "mt-3" : "mt-4"
-          } inline-flex text-xs font-semibold items-center gap-1 ${t.link}`}
-        >
-          {linkLabel} <ArrowUpRight size={14} />
-        </Link>
+ {to && (
+  <Link
+    to={to}
+    className={`${
+      progress !== undefined ? "mt-3" : "mt-4"
+    } inline-flex text-xs font-semibold items-center gap-1 ${t.link}`}
+  >
+    {linkLabel} <ArrowUpRight size={14} />
+  </Link>
+)}
       </div>
     );
   }

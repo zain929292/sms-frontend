@@ -12,10 +12,19 @@ const StudentEnrollmentTableColumns = () => [
   },
   {
     key: "student_name",
-    label: "STUDENT",
+    label: "NAME",
     render: (row) => (
       <span className="text-xs font-semibold text-slate-800">
         {row.student_name || "—"}
+      </span>
+    ),
+  },
+  {
+    key: "roll_number",
+    label: "ROLL NUMBER",
+    render: (row) => (
+      <span className="text-xs font-semibold text-slate-800">
+        {row.roll_number || "—"}
       </span>
     ),
   },

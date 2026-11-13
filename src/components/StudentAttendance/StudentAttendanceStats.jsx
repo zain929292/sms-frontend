@@ -11,7 +11,7 @@ const StudentAttendanceStats = ({ stats = {} }) => {
   const total = Number(stats.total ?? 0);
   const present = Number(stats.present ?? 0);
   const absent = Number(stats.absent ?? 0);
-  const late = Number(stats.late ?? 0);
+  const leave = Number(stats.leave ?? 0);
 
   const presentRate = total
     ? Math.round((present / total) * 100)
@@ -21,8 +21,8 @@ const StudentAttendanceStats = ({ stats = {} }) => {
     ? Math.round((absent / total) * 100)
     : 0;
 
-  const lateRate = total
-    ? Math.round((late / total) * 100)
+  const leaveRate = total
+    ? Math.round((leave / total) * 100)
     : 0;
 
   const cards = [
@@ -55,13 +55,13 @@ const StudentAttendanceStats = ({ stats = {} }) => {
       progressColor: "bg-rose-500",
     },
     {
-      key: "late",
-      title: "Late Students",
-      value: late,
+      key: "leave",
+      title: "leave",
+      value: leave,
       icon: Clock,
       color: "amber",
-      subtitle: `${lateRate}% of total`,
-      progressPct: lateRate,
+      subtitle: `${leaveRate}% of total`,
+      progressPct: leaveRate,
       progressColor: "bg-amber-500",
     },
   ];

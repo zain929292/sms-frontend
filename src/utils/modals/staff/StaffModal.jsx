@@ -1,4 +1,3 @@
-
 import { useEffect, useState } from "react";
 import {
   UserRound,
@@ -9,7 +8,6 @@ import {
 
 import ModalShell from "../../../shared/ModalShell.shared";
 import FormField from "../../../shared/FormField.shared";
-import SearchableSelect from "../../../shared/SearchableSelect.shared";
 import { useModalAnimation } from "../../../shared/useModalAnimation.hook";
 
 const EMPTY_FORM = {
@@ -43,7 +41,6 @@ const GENDER_OPTIONS = [
 const StaffModal = ({
   open,
   staff,
-  users = [],
   saving = false,
   onClose,
   onSave,
@@ -53,9 +50,6 @@ const StaffModal = ({
 
   const [form, setForm] = useState({ ...EMPTY_FORM });
 
-  const [userSearch, setUserSearch] = useState("");
-  const [openDropdown, setOpenDropdown] = useState(null);
-
   const [photo, setPhoto] = useState(null);
   const [photoPreview, setPhotoPreview] = useState("");
   const [removePhoto, setRemovePhoto] = useState(false);
@@ -64,7 +58,7 @@ const StaffModal = ({
 
   const isEdit = Boolean(staff?.id);
 
-  // Load form data
+  // Load selected user and staff details
   useEffect(() => {
     if (!open) return;
 
@@ -92,19 +86,7 @@ const StaffModal = ({
     setPhoto(null);
     setRemovePhoto(false);
     setErrors({});
-    setOpenDropdown(null);
-
-    const selectedUser = users.find(
-      (item) => String(item.id) === nextForm.user_id
-    );
-
-    setUserSearch(selectedUser?.name ?? "");
-  }, [open, staff, users]);
-
-  // Selected User
-  const selectedUser = users.find(
-    (item) => String(item.id) === String(form.user_id)
-  );
+  }, [open, staff]);
 
   // Handle input changes
   const handleChange = (e) => {
@@ -115,23 +97,6 @@ const StaffModal = ({
       [name]: value,
     }));
   };
-
-  // Handle user selection
-  const selectItem = (field, item, setSearch, label) => {
-    setForm((prev) => ({
-      ...prev,
-      [field]: String(item.id),
-    }));
-
-    setSearch(label(item));
-    setOpenDropdown(null);
-  };
-
-  // User filter
-  const userFilter = (item, search) =>
-    `${item.name ?? ""} ${item.email ?? ""} ${item.id ?? ""}`
-      .toLowerCase()
-      .includes(search.toLowerCase());
 
   // Handle photo upload
   const handlePhotoChange = (e) => {
@@ -186,7 +151,7 @@ const StaffModal = ({
     const nextErrors = {};
 
     if (!form.user_id) {
-      nextErrors.user_id = "Please select a user.";
+      nextErrors.user_id = "User information is missing.";
     }
 
     if (!form.phone.trim()) {
@@ -213,8 +178,6 @@ const StaffModal = ({
   // Close modal
   const handleClose = () => {
     if (saving) return;
-
-    setOpenDropdown(null);
     onClose();
   };
 
@@ -247,7 +210,7 @@ const StaffModal = ({
     <ModalShell
       isOpen={open}
       onClose={handleClose}
-      title={isEdit ? "Update Staff" : "Add Staff"}
+      title={isEdit ? "Update Staff" : "Add Staff Details"}
       subtitle="Manage staff information."
       icon={<UserRound size={22} />}
       maxWidth="max-w-3xl"
@@ -319,81 +282,31 @@ const StaffModal = ({
           {/* Staff Information */}
           <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
 
-            {/* User */}
+            {/* Selected User - Read Only */}
             <div>
-              {isEdit ? (
-                <>
-                  <label className="mb-1.5 block text-sm font-medium text-slate-700">
-                    Selected User
-                  </label>
+              <label className="mb-1.5 block text-sm font-medium text-slate-700">
+                Selected User
+              </label>
 
-                  <div className="flex h-[42px] items-center rounded-xl border border-slate-200 bg-slate-50 px-4 text-sm text-slate-600">
-                    {selectedUser
-                      ? `${selectedUser.name} - ID: ${selectedUser.id}`
-                      : staff?.user_name || staff?.name || `User ID: ${form.user_id}`}
-                  </div>
-                </>
-              ) : (
-                <SearchableSelect
-                  label="Select User"
-                  icon={UserRound}
-                  placeholder="Search user..."
-                  searchTerm={userSearch}
-                  onSearchChange={setUserSearch}
-                  items={users}
-                  isOpen={openDropdown === "user"}
-                  onOpenChange={(open) =>
-                    setOpenDropdown(open ? "user" : null)
-                  }
-                  filterFn={userFilter}
-                  onSelect={(item) =>
-                    selectItem(
-                      "user_id",
-                      item,
-                      setUserSearch,
-                      (value) => value.name
-                    )
-                  }
-                  itemRenderer={(item) => (
-                    <div>
-                      <p className="text-xs font-semibold text-slate-800">
-                        {item.name}
-                      </p>
-                      <p className="text-[11px] text-slate-500">
-                        {item.email || `User ID: ${item.id}`}
-                      </p>
-                    </div>
-                  )}
-                  emptyMessage="No users found."
-                />
-              )}
+              <div className="flex h-[42px] items-center gap-2 rounded-xl border border-slate-200 bg-slate-50 px-4 text-sm text-slate-600">
+                <UserRound size={16} className="text-teal-700" />
+
+                <span>
+                  {staff?.user_name ||
+                    staff?.name ||
+                    `User ID: ${form.user_id}`}
+                </span>
+
+                <span className="ml-auto text-xs text-slate-400">
+                  ID: {form.user_id || "-"}
+                </span>
+              </div>
 
               {errors.user_id && (
                 <p className="mt-1 text-xs text-red-500">
                   {errors.user_id}
                 </p>
               )}
-
-              {users.length === 0 && !isEdit && (
-                <p className="mt-1 text-xs text-amber-600">
-                  No users available.
-                </p>
-              )}
-            </div>
-
-            {/* Selected User Information */}
-            <div>
-              <label className="mb-1.5 block text-sm font-medium text-slate-700">
-                User Information
-              </label>
-
-              <div className="flex h-[42px] items-center rounded-xl border border-slate-200 bg-slate-50 px-4 text-sm text-slate-600">
-                {selectedUser
-                  ? `${selectedUser.name} - ID: ${selectedUser.id}`
-                  : form.user_id
-                    ? `User ID: ${form.user_id}`
-                    : "No user selected"}
-              </div>
             </div>
 
             <FormField
@@ -414,6 +327,7 @@ const StaffModal = ({
               onChange={handleChange}
               options={GENDER_OPTIONS}
               placeholder="Select gender"
+              required
             />
 
             <FormField
@@ -531,18 +445,14 @@ const StaffModal = ({
 
             <button
               type="submit"
-              disabled={
-                saving ||
-                (!isEdit && users.length === 0) ||
-                (!isEdit && !form.user_id)
-              }
+              disabled={saving || !form.user_id}
               className="flex items-center gap-2 rounded-xl bg-teal-700 px-6 py-2.5 text-sm font-semibold text-white transition-all duration-200 hover:bg-teal-800 active:scale-95 disabled:cursor-not-allowed disabled:opacity-50"
             >
               {saving
                 ? "Saving..."
                 : isEdit
                   ? "Update Staff"
-                  : "Create Staff"}
+                  : "Save Details"}
             </button>
           </div>
         </form>

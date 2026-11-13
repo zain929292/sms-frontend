@@ -12,7 +12,10 @@ import TimetableHeader from "../../components/Timetable/TimetableHeader";
 import TimetableStats from "../../components/Timetable/TimetableStats";
 import TimetableFilters from "../../components/Timetable/TimetableFilters";
 import TimetableTable from "../../components/Timetable/TimetableTable";
+import PeriodsTable from "../../components/Timetable/PeriodsTable";
+
 import TimetableModal from "../../utils/modals/timetable/TimetableModal";
+import PeriodModal from "../../utils/modals/period/PeriodModal";
 
 const Timetable = () => {
   const dispatch = useDispatch();
@@ -32,7 +35,11 @@ const Timetable = () => {
   const {
     periods = [],
     loadingPeriods,
+    savingPeriod,
     fetchPeriods,
+    createPeriod,
+    updatePeriod,
+    deletePeriod,
   } = usePeriods();
 
   // Timetable
@@ -54,10 +61,14 @@ const Timetable = () => {
   const { classes = [] } = useClasses();
   const { subjects = [] } = useSubjects();
 
-  // Modal states
+  // Timetable Modal
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [selectedTimetable, setSelectedTimetable] = useState(null);
   const [initialData, setInitialData] = useState(null);
+
+  // Period Modal
+  const [isPeriodModalOpen, setIsPeriodModalOpen] = useState(false);
+  const [selectedPeriod, setSelectedPeriod] = useState(null);
 
   // Filters
   const [selectedClassTab, setSelectedClassTab] = useState("all");
@@ -118,8 +129,6 @@ const Timetable = () => {
   };
 
   // Add timetable
-  // Table Add button sends class_id, period_id and day.
-  // Header Add button sends no data.
   const handleAdd = (data = null) => {
     setSelectedTimetable(null);
     setInitialData(data);
@@ -133,7 +142,7 @@ const Timetable = () => {
     setIsModalOpen(true);
   };
 
-  // Create or update timetable
+  // Create / Update timetable
   const handleSubmit = async (payload) => {
     const isEdit = Boolean(selectedTimetable?.id);
 
@@ -168,17 +177,69 @@ const Timetable = () => {
     }
   };
 
-  // Refresh timetable and periods
-  const handleRefresh = () => {
-    fetchTimetable();
-    fetchPeriods();
-  };
-
-  // Close modal
+  // Close timetable modal
   const closeModal = () => {
     setIsModalOpen(false);
     setSelectedTimetable(null);
     setInitialData(null);
+  };
+
+  // =========================
+  // Period Actions
+  // =========================
+
+  // Add period
+  const handleAddPeriod = () => {
+    setSelectedPeriod(null);
+    setIsPeriodModalOpen(true);
+  };
+
+  // Edit period
+  const handleEditPeriod = (period) => {
+    setSelectedPeriod(period);
+    setIsPeriodModalOpen(true);
+  };
+
+  // Create / Update period
+  const handleSavePeriod = async (payload) => {
+    const success = selectedPeriod?.id
+      ? await updatePeriod(selectedPeriod.id, payload)
+      : await createPeriod(payload);
+
+    if (success) {
+      setIsPeriodModalOpen(false);
+      setSelectedPeriod(null);
+
+      // Refresh timetable to reflect period changes
+      fetchTimetable(1, perPage, selectedClassTab);
+    }
+  };
+
+  // Delete period
+  const handleDeletePeriod = async (period) => {
+    const confirmed = window.confirm(
+      `Are you sure you want to delete ${period.name}?`
+    );
+
+    if (!confirmed) return;
+
+    const success = await deletePeriod(period.id);
+
+    if (success) {
+      fetchTimetable(1, perPage, selectedClassTab);
+    }
+  };
+
+  // Close period modal
+  const closePeriodModal = () => {
+    setIsPeriodModalOpen(false);
+    setSelectedPeriod(null);
+  };
+
+  // Refresh timetable and periods
+  const handleRefresh = () => {
+    fetchTimetable();
+    fetchPeriods();
   };
 
   return (
@@ -197,13 +258,23 @@ const Timetable = () => {
         daysCount={daysCount}
       />
 
+      {/* Periods Management Table */}
+      <PeriodsTable
+        periods={periods}
+        loading={loadingPeriods}
+        onAdd={handleAddPeriod}
+        onEdit={handleEditPeriod}
+        onDelete={handleDeletePeriod}
+        onRefresh={fetchPeriods}
+      />
+      
       {/* Filters */}
-      <TimetableFilters
+      {/* <TimetableFilters
         searchTerm={searchTerm}
         onSearchChange={setSearchTerm}
         onClear={() => setSearchTerm("")}
         hasFilters={Boolean(searchTerm)}
-      />
+      /> */}
 
       {/* Timetable Table */}
       <TimetableTable
@@ -217,9 +288,13 @@ const Timetable = () => {
         onAdd={handleAdd}
         selectedDay={selectedDay}
         onDayChange={setSelectedDay}
+        searchTerm={searchTerm}
+        onSearchChange={setSearchTerm}
+        onClear={() => setSearchTerm("")}
+        hasFilters={Boolean(searchTerm)}
       />
 
-      {/* Add / Edit Modal */}
+      {/* Timetable Add / Edit Modal */}
       <TimetableModal
         isOpen={isModalOpen}
         onClose={closeModal}
@@ -231,6 +306,16 @@ const Timetable = () => {
         teachers={teachers}
         periods={periods}
         saving={saving}
+      />
+
+      {/* Period Add / Edit Modal */}
+      <PeriodModal
+        isOpen={isPeriodModalOpen}
+        onClose={closePeriodModal}
+        onSubmit={handleSavePeriod}
+        selectedPeriod={selectedPeriod}
+        saving={savingPeriod}
+        periods={periods}
       />
 
     </div>

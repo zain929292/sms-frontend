@@ -1,5 +1,4 @@
 
-import { useState, useCallback } from "react";
 import {
   Eye,
   Pencil,
@@ -9,7 +8,6 @@ import {
 } from "lucide-react";
 
 import Table from "../../utils/table/Table.util";
-import StaffFilters from "./StaffFilters";
 
 const StaffTableSection = ({
   staff = [],
@@ -20,9 +18,6 @@ const StaffTableSection = ({
   onPageChange,
   onLimitChange,
 
-  searchValue = "",
-  onSearch,
-
   onClearFilters,
   onRefresh,
 
@@ -30,7 +25,6 @@ const StaffTableSection = ({
   onEdit,
   onDelete,
 }) => {
-  const [isDropdownOpen, setIsDropdownOpen] = useState(false);
 
   // Staff table columns
   const columns = [
@@ -56,6 +50,7 @@ const StaffTableSection = ({
             <p className="text-xs font-semibold text-slate-700 truncate">
               {row.name || "N/A"}
             </p>
+
             <p className="text-[11px] text-slate-400 truncate">
               {row.email || "No email"}
             </p>
@@ -140,53 +135,27 @@ const StaffTableSection = ({
   ];
 
   // Table row actions
-  const getRowActions = useCallback(
-    (row) => [
-      {
-        label: "View Staff",
-        icon: <Eye size={14} />,
-        onClick: (selectedRow) =>
-          onView?.(selectedRow || row),
-      },
-      {
-        label: "Edit Staff",
-        icon: <Pencil size={14} />,
-        onClick: (selectedRow) =>
-          onEdit?.(selectedRow || row),
-      },
-      {
-        label: "Delete Staff",
-        icon: <Trash2 size={14} />,
-        variant: "danger",
-        onClick: (selectedRow) =>
-          onDelete?.(selectedRow || row),
-      },
-    ],
-    [onView, onEdit, onDelete]
-  );
-
-  // Quick Staff Lookup
-  const handleSelectStaff = (item) => {
-    const staffName = item.user?.name ?? item.name ?? "";
-
-    onSearch?.(staffName);
-    setIsDropdownOpen(false);
-  };
-
-  // Existing StaffFilters
-  const filterControls = (
-    <StaffFilters
-      searchTerm={searchValue}
-      isDropdownOpen={isDropdownOpen}
-      setIsDropdownOpen={setIsDropdownOpen}
-      matches={staff}
-      onSearchChange={onSearch}
-      onClearSearch={() => onSearch?.("")}
-      onSelectStaff={handleSelectStaff}
-      onClearAll={onClearFilters}
-      hasFilters={Boolean(searchValue)}
-    />
-  );
+  const getRowActions = (row) => [
+    {
+      label: "View Staff",
+      icon: <Eye size={14} />,
+      onClick: (selectedRow) =>
+        onView?.(selectedRow || row),
+    },
+    {
+      label: "Edit Staff",
+      icon: <Pencil size={14} />,
+      onClick: (selectedRow) =>
+        onEdit?.(selectedRow || row),
+    },
+    {
+      label: "Delete Staff",
+      icon: <Trash2 size={14} />,
+      variant: "danger",
+      onClick: (selectedRow) =>
+        onDelete?.(selectedRow || row),
+    },
+  ];
 
   // Refresh button
   const actionButton = (
@@ -206,6 +175,7 @@ const StaffTableSection = ({
 
   return (
     <div className="space-y-2">
+
       {/* Error */}
       {error && (
         <div className="flex items-center justify-between gap-2 p-2.5 rounded-lg bg-red-50 border border-red-100 text-red-600">
@@ -221,13 +191,11 @@ const StaffTableSection = ({
         </div>
       )}
 
-      {/* Reusable Table */}
+      {/* Staff Table */}
       <Table
         title="Staff Management"
         description="Manage and view staff members."
         actionButton={actionButton}
-        filterControls={filterControls}
-        onClearFilters={onClearFilters}
         columns={columns}
         data={staff}
         keyField="id"
@@ -239,6 +207,7 @@ const StaffTableSection = ({
         onLimitChange={onLimitChange}
         limitOptions={[10, 25, 50, 100]}
       />
+
     </div>
   );
 };

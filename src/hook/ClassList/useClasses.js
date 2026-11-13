@@ -11,8 +11,13 @@ import {
 import useClassList from "../ClassList/useClassList";
 import errorMessage from "../../utils/errorMessage/errorMessage";
 
-const useClasses = () => {
-  const {    classes,    pagination,    loading,    fetchClasses,  } = useClassList();
+const useClasses = (initialPage = 1, initialLimit = 10) => {
+  const {
+    classes,
+    pagination,
+    loading,
+    fetchClasses,
+  } = useClassList(initialPage, initialLimit);
 
   const [saving, setSaving] = useState(false);
 

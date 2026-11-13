@@ -1,3 +1,4 @@
+
 import {
   Users,
   Calendar,
@@ -5,54 +6,61 @@ import {
   CalendarCheck,
   Wallet,
   GraduationCap,
-  HeartPulse,
-  BedDouble,
-  Pill,
-  Microscope,
-  Activity,
-  Stethoscope,
   UserPlus,
   FileText,
-  AlertCircle,
-  Syringe,
-  TestTube,
+  Activity,
+  ClipboardList,
 } from "lucide-react";
 
+// Common constants
 export const EMPTY = [];
-export const TOTAL_BEDS = 50;
-export const LOW_STOCK_THRESHOLD = 50;
+
 export const REFRESH_TTL_MS = 60 * 1000;
 
+// Dashboard routes
 export const ROUTES = {
-  patients: "/clinical/patients",
-  appointments: "/clinical/appointments",
-  admissions: "/clinical/ipd-admissions",
-  beds: "/clinical/wards-and-beds",
-  labTests: "/laboratory/lab-tests",
-  labBookings: "/laboratory/test-booking",
-  medicines: "/pharmacy-and-inventory/medicines",
-  staff: "/administration/staff",
-  dashboard: "/dashboard",
-  prescriptions: "/clinical/prescriptions",
-  labSamples: "/laboratory/lab-samples",
-  labResults: "/laboratory/test-results",
+  dashboard: "/overview/dashboard",
+
+  students: "/students",
+  studentAdmission: "/students/admission",
+  attendance: "/operations/student-attendance",
+
+  teachers: "/users",
+  staffAttendance: "/staff/attendance",
+  leaveRequests: "/staff/leave-requests",
+
+  classes: "/academics/classes",
+  sessions: "/academic/session",
+  subjects: "/academics/subjects",
+  timetable: "/academics/timetable",
+  assignments: "/academics/assignments",
+  exams: "/academics/exams",
+
+  fees: "/finance/fees",
+  feeStructure: "/finance/fee-structure",
+  salaryStructure: "/staff/salary-structure",
+  payroll: "/finance/payroll",
+
+  announcements: "/overview/announcements",
+  reports: "/reports",
+  schoolProfile: "/system/school-profile",
+  settings: "/admin/settings",
 };
 
-export const FETCHERS = {
-
-};
+// Dashboard data fetchers
+export const FETCHERS = {};
 
 export const ALL_DATA = Object.keys(FETCHERS);
 
+// Role-based dashboard data
 export const ROLE_DATA = {
   admin: ALL_DATA,
-  receptionist: ALL_DATA,
-  doctor: ["appointments", "admissions", "patients", "staff"],
-  nurse: ["admissions", "appointments", "patients"],
-  pharmacist: ["medicines", "patients"],
-  labtechnician: ["labTests", "patients"],
+  teacher: ALL_DATA,
+  student: ALL_DATA,
+  parent: ALL_DATA,
 };
 
+// Role messages
 export const ROLE_MESSAGE = {
   admin: "Here's what's happening at your school today.",
   teacher: "Here is your class overview and upcoming schedule for today.",
@@ -60,63 +68,172 @@ export const ROLE_MESSAGE = {
   parent: "Here is an overview of your child's academic progress and attendance.",
 };
 
+// UI tones
 export const TONES = {
-  blue: { bg: "bg-blue-50", icon: "text-blue-600", link: "text-blue-600 hover:text-blue-700" },
-  emerald: { bg: "bg-emerald-50", icon: "text-emerald-600", link: "text-emerald-600 hover:text-emerald-700" },
-  amber: { bg: "bg-amber-50", icon: "text-amber-600", link: "text-amber-600 hover:text-amber-700" },
-  purple: { bg: "bg-purple-50", icon: "text-purple-600", link: "text-purple-600 hover:text-purple-700" },
-  teal: { bg: "bg-teal-50", icon: "text-teal-600", link: "text-teal-600 hover:text-teal-700" },
-  rose: { bg: "bg-rose-50", icon: "text-rose-600", link: "text-rose-600 hover:text-rose-700" },
+  blue: {
+    bg: "bg-blue-50",
+    icon: "text-blue-600",
+    link: "text-blue-600 hover:text-blue-700",
+  },
+  emerald: {
+    bg: "bg-emerald-50",
+    icon: "text-emerald-600",
+    link: "text-emerald-600 hover:text-emerald-700",
+  },
+  amber: {
+    bg: "bg-amber-50",
+    icon: "text-amber-600",
+    link: "text-amber-600 hover:text-amber-700",
+  },
+  purple: {
+    bg: "bg-purple-50",
+    icon: "text-purple-600",
+    link: "text-purple-600 hover:text-purple-700",
+  },
+  teal: {
+    bg: "bg-teal-50",
+    icon: "text-teal-600",
+    link: "text-teal-600 hover:text-teal-700",
+  },
+  rose: {
+    bg: "bg-rose-50",
+    icon: "text-rose-600",
+    link: "text-rose-600 hover:text-rose-700",
+  },
 };
 
+// Admin quick actions
 const ADMIN_ACTIONS = [
-  { label: "Add Student", Icon: UserPlus, color: "bg-blue-500" },
-  { label: "Add Teacher", Icon: Users, color: "bg-teal-500" },
-  { label: "Manage Classes", Icon: BookOpen, color: "bg-emerald-500" },
-  { label: "Mark Attendance", Icon: CalendarCheck, color: "bg-purple-500" },
-  { label: "Manage Exams", Icon: GraduationCap, color: "bg-amber-500" },
-  { label: "Collect Fees", Icon: Wallet, color: "bg-rose-500" },
+  {
+    label: "Add Student",
+    Icon: UserPlus,
+    color: "bg-blue-500",
+    to: ROUTES.students,
+  },
+  {
+    label: "Add Teacher",
+    Icon: Users,
+    color: "bg-teal-500",
+    to: ROUTES.teachers,
+  },
+  {
+    label: "Manage Classes",
+    Icon: BookOpen,
+    color: "bg-emerald-500",
+    to: ROUTES.classes,
+  },
+  {
+    label: "Mark Attendance",
+    Icon: CalendarCheck,
+    color: "bg-purple-500",
+    to: ROUTES.attendance,
+  },
+  {
+    label: "Manage Exams",
+    Icon: GraduationCap,
+    color: "bg-amber-500",
+    to: ROUTES.exams,
+  },
+  {
+    label: "Collect Fees",
+    Icon: Wallet,
+    color: "bg-rose-500",
+    to: ROUTES.fees,
+  },
 ];
 
+// Role-based quick actions
 export const QUICK_ACTIONS = {
   admin: ADMIN_ACTIONS,
-  receptionist: ADMIN_ACTIONS,
-  doctor: [
-    { label: "My Appointments", Icon: Calendar, color: "bg-blue-500", to: ROUTES.appointments },
-    { label: "My Patients", Icon: Users, color: "bg-teal-500", to: ROUTES.patients },
-    { label: "My Admissions", Icon: HeartPulse, color: "bg-emerald-500", to: ROUTES.admissions },
-    { label: "Write Prescription", Icon: FileText, color: "bg-purple-500", to: ROUTES.prescriptions },
-    { label: "Lab Results", Icon: Microscope, color: "bg-amber-500", to: ROUTES.labResults },
-    { label: "View Staff", Icon: Stethoscope, color: "bg-rose-500", to: ROUTES.staff },
+
+  teacher: [
+    {
+      label: "My Classes",
+      Icon: BookOpen,
+      color: "bg-blue-500",
+      to: ROUTES.classes,
+    },
+    {
+      label: "Mark Attendance",
+      Icon: CalendarCheck,
+      color: "bg-teal-500",
+      to: ROUTES.attendance,
+    },
+    {
+      label: "My Timetable",
+      Icon: Calendar,
+      color: "bg-emerald-500",
+      to: ROUTES.timetable,
+    },
+    {
+      label: "Manage Exams",
+      Icon: GraduationCap,
+      color: "bg-purple-500",
+      to: ROUTES.exams,
+    },
   ],
-  nurse: [
-    { label: "Admissions", Icon: HeartPulse, color: "bg-teal-500", to: ROUTES.admissions },
-    { label: "Appointments", Icon: Calendar, color: "bg-blue-500", to: ROUTES.appointments },
-    { label: "Patients", Icon: Users, color: "bg-emerald-500", to: ROUTES.patients },
-    { label: "View Beds", Icon: BedDouble, color: "bg-purple-500", to: ROUTES.beds },
+
+  student: [
+    {
+      label: "My Timetable",
+      Icon: Calendar,
+      color: "bg-blue-500",
+      to: ROUTES.timetable,
+    },
+    {
+      label: "My Attendance",
+      Icon: CalendarCheck,
+      color: "bg-teal-500",
+      to: ROUTES.attendance,
+    },
+    {
+      label: "My Fees",
+      Icon: Wallet,
+      color: "bg-emerald-500",
+      to: ROUTES.fees,
+    },
   ],
-  pharmacist: [
-    { label: "Medicines", Icon: Pill, color: "bg-purple-500", to: ROUTES.medicines },
-    { label: "Add Medicine", Icon: UserPlus, color: "bg-teal-500", to: ROUTES.medicines },
-    { label: "View Prescriptions", Icon: FileText, color: "bg-blue-500", to: ROUTES.prescriptions },
-    { label: "Low Stock Alerts", Icon: AlertCircle, color: "bg-amber-500", to: ROUTES.medicines },
-  ],
-  labtechnician: [
-    { label: "Lab Tests", Icon: Microscope, color: "bg-amber-500", to: ROUTES.labTests },
-    { label: "Test Bookings", Icon: Calendar, color: "bg-blue-500", to: ROUTES.labBookings },
-    { label: "Lab Samples", Icon: Syringe, color: "bg-teal-500", to: ROUTES.labSamples },
-    { label: "Lab Results", Icon: TestTube, color: "bg-purple-500", to: ROUTES.labResults },
+
+  parent: [
+    {
+      label: "Child Attendance",
+      Icon: CalendarCheck,
+      color: "bg-blue-500",
+      to: ROUTES.attendance,
+    },
+    {
+      label: "Fee Details",
+      Icon: Wallet,
+      color: "bg-teal-500",
+      to: ROUTES.fees,
+    },
+    {
+      label: "Academic Progress",
+      Icon: GraduationCap,
+      color: "bg-purple-500",
+      to: ROUTES.exams,
+    },
   ],
 };
 
+// Default dashboard action
 export const DEFAULT_ACTIONS = [
-  { label: "Dashboard", Icon: Activity, color: "bg-blue-500", to: ROUTES.dashboard },
+  {
+    label: "Dashboard",
+    Icon: Activity,
+    color: "bg-blue-500",
+    to: ROUTES.dashboard,
+  },
 ];
 
+// Badge styles
 export const APPOINTMENT_BADGE = {
   Completed: "bg-emerald-100 text-emerald-800",
   Pending: "bg-amber-100 text-amber-800",
 };
 
-export const ADMISSION_ACTIVE_BADGE = "bg-emerald-100 text-emerald-800";
-export const DEFAULT_BADGE = "bg-slate-200 text-slate-700";
+export const ADMISSION_ACTIVE_BADGE =
+  "bg-emerald-100 text-emerald-800";
+
+export const DEFAULT_BADGE =
+  "bg-slate-200 text-slate-700";

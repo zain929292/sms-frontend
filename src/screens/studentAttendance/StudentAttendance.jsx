@@ -1,22 +1,21 @@
+
 import FilterBar from "../../utils/filter/FilterBar.util";
-import Table from "../../utils/table/Table.util";
 
 import StudentAttendanceHeader from "../../components/StudentAttendance/StudentAttendanceHeader";
 import StudentAttendanceStats from "../../components/StudentAttendance/StudentAttendanceStats";
-import StudentAttendanceTableColumns from "../../components/StudentAttendance/StudentAttendanceTableColumns";
-import StudentAttendanceDateTabs from "../../components/StudentAttendance/StudentAttendanceDateTabs";
 import StudentAttendanceSearchItem from "../../components/StudentAttendance/StudentAttendanceSearchItem";
 import StudentAttendanceMonthFilter from "../../components/StudentAttendance/StudentAttendanceMonthFilter";
+import StudentAttendanceClassTabs from "../../components/StudentAttendance/StudentAttendanceClassTabs";
+import StudentAttendanceTableSection from "../../components/StudentAttendance/StudentAttendanceTableSection";
+import StudentAttendanceDateTabs from "../../components/StudentAttendance/StudentAttendanceDateTabs";
 
 import StudentAttendanceModal from "../../utils/modals/studentAttendance/StudentAttendanceModal";
-import StudentAttendanceViewModal from "../../utils/modals/studentAttendance/StudentAttendanceViewModal";
 
 import useStudentAttendance from "../../hook/StudentAttendance/useStudentAttendance";
 
 export default function StudentAttendance() {
   const s = useStudentAttendance();
 
-  // Filter Configuration
   const filterConfig = {
     picker: {
       label: "Search Student",
@@ -29,7 +28,6 @@ export default function StudentAttendance() {
       items: s.filteredStudents || [],
       onSelectItem: s.handleSelectStudent,
       emptyMessage: "No matching students found.",
-
       itemRenderer: (student) => (
         <StudentAttendanceSearchItem student={student} />
       ),
@@ -48,36 +46,26 @@ export default function StudentAttendance() {
 
   return (
     <div className="space-y-4">
-
       {/* Header */}
       <StudentAttendanceHeader
-        studentCount={
-          s.stats.total || s.studentOptions?.length || 0
-        }
-        attendanceDate={
-          s.attendanceDate
-            ? new Date(`${s.attendanceDate}T00:00:00`).toLocaleDateString(
-                "en-US",
-                {
-                  day: "2-digit",
-                  month: "short",
-                  year: "numeric",
-                }
-              )
-            : "Select attendance date"
-        }
+        studentCount={s.activeCount || 0}
+        attendanceDate={s.attendanceDate}
         onAddAttendance={s.openCreateModal}
       />
 
+      {/* Statistics */}
+      <StudentAttendanceStats stats={s.stats} />
+
       {/* Month and Date Filters */}
       <div className="space-y-3">
-        <div className="w-full sm:w-56">
-          <StudentAttendanceMonthFilter
-            selectedMonth={s.selectedMonth}
-            onMonthChange={s.handleMonthChange}
-          />
-        </div>
+          <div className="w-full sm:w-56">
+            <StudentAttendanceMonthFilter
+              selectedMonth={s.selectedMonth}
+              onMonthChange={s.handleMonthChange}
+            />
+          </div>
 
+        {/* Date Tabs */}
         <StudentAttendanceDateTabs
           selectedMonth={s.selectedMonth}
           attendanceDate={s.attendanceDate}
@@ -85,30 +73,20 @@ export default function StudentAttendance() {
         />
       </div>
 
-      {/* Statistics */}
-      <StudentAttendanceStats stats={s.stats} />
-
       {/* Search and Export */}
       <FilterBar {...filterConfig} />
 
-      {/* Attendance Table */}
-      <Table
-        title="Student Attendance"
-        columns={StudentAttendanceTableColumns()}
-        data={s.paginatedAttendance || []}
-        keyField="id"
-        loading={s.loading}
-        getRowActions={s.getRowActions}
-        pagination={{
-          page: s.currentPage,
-          limit: s.itemsPerPage,
-          total: s.pagination.total,
-          last_page: s.totalPages,
-        }}
-        onPageChange={s.setCurrentPage}
-        onLimitChange={s.handleLimitChange}
-        limitOptions={[10, 25, 50, 100]}
+      {/* Class Tabs */}
+      <StudentAttendanceClassTabs
+        classes={s.classes || []}
+        selectedClassTab={s.selectedClassTab}
+        activeCount={s.activeCount || 0}
+        classTabCounts={s.classTabCounts || {}}
+        onClassTabChange={s.handleClassTabChange}
       />
+
+      {/* Attendance Register */}
+      <StudentAttendanceTableSection s={s} />
 
       {/* Create / Edit Modal */}
       <StudentAttendanceModal
@@ -119,14 +97,6 @@ export default function StudentAttendance() {
         studentOptions={s.studentOptions}
         saving={s.saving}
       />
-
-      {/* View Modal */}
-      <StudentAttendanceViewModal
-        isOpen={s.isViewModalOpen}
-        onClose={s.closeViewModal}
-        attendance={s.viewAttendance}
-      />
-
     </div>
   );
 }

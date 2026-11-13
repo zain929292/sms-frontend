@@ -31,6 +31,7 @@ export default function useEnrollmentActions({
     try {
       const payload = {
         student_id: Number(formData.student_id),
+        roll_number: String(formData.roll_number ?? "").trim(),
         class_id: Number(formData.class_id),
         academic_session_id: Number(formData.academic_session_id),
         enrollment_date: formData.enrollment_date || null,

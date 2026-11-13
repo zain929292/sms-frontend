@@ -1,11 +1,10 @@
-import { useCallback, useEffect, useState } from "react";
-import { Eye, Pencil, Trash2 } from "lucide-react";
+
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { toast } from "react-hot-toast";
 
 import studentAttendanceApi from "../../redux/api_data/studentAttendanceApi/studentAttendanceApi";
-import studentApi from "../../redux/api_data/studentApi/studentApi";
+import { getStudentEnrollments } from "../../redux/api_data/studentEnrollmentApi/studentEnrollmentApi";
 
-// Initial month format: YYYY-MM
 const getCurrentMonth = () => {
   const today = new Date();
 
@@ -14,570 +13,536 @@ const getCurrentMonth = () => {
   ).padStart(2, "0")}`;
 };
 
-const EMPTY_PAGINATION = {
-  current_page: 1,
-  per_page: 10,
-  last_page: 1,
-  total: 0,
-};
-
 const getErrorMessage = (error, fallback) =>
-  error.response?.data?.message ||
-  error.message ||
-  fallback;
-
-const getValidationErrors = (error) => {
-  const errors = error.response?.data?.errors;
-
-  return errors
-    ? Object.values(errors).flat().filter(Boolean)
-    : [];
-};
+  error?.response?.data?.message || error?.message || fallback;
 
 export default function useStudentAttendance() {
-  // Attendance states
+  const [enrollments, setEnrollments] = useState([]);
   const [attendance, setAttendance] = useState([]);
-  const [stats, setStats] = useState({});
-  const [loading, setLoading] = useState(false);
-  const [saving, setSaving] = useState(false);
-  const [deleting, setDeleting] = useState(false);
 
-  // Student dropdown states
-  const [studentOptions, setStudentOptions] = useState([]);
-  const [studentLoading, setStudentLoading] = useState(false);
-  const [isDropdownOpen, setIsDropdownOpen] = useState(false);
-  const [selectedStudent, setSelectedStudent] = useState(null);
+  const [selectedClassId, setSelectedClassId] = useState("all");
+  const [selectedMonth, setSelectedMonth] = useState(getCurrentMonth());
 
-  // Filters
+  // Default: All Dates
+  const [attendanceDate, setAttendanceDate] = useState("all");
+
   const [searchTerm, setSearchTerm] = useState("");
-  const [statusFilter, setStatusFilter] = useState("");
-  const [attendanceDate, setAttendanceDate] = useState("");
-  const [selectedMonth, setSelectedMonth] = useState(getCurrentMonth);
 
-  // Pagination
-  const [currentPage, setCurrentPage] = useState(1);
-  const [itemsPerPage, setItemsPerPage] = useState(10);
+  const [loading, setLoading] = useState(false);
+  const [savingCell, setSavingCell] = useState("");
 
-  const [pagination, setPagination] = useState({
-    ...EMPTY_PAGINATION,
-  });
+  // Fetch active enrolled students
+  const fetchEnrollments = useCallback(async () => {
+    try {
+      const response = await getStudentEnrollments({
+        page: 1,
+        limit: 100,
+        status: "active",
+      });
 
-  // Modal states
-  const [isModalOpen, setIsModalOpen] = useState(false);
-  const [selectedAttendance, setSelectedAttendance] = useState(null);
+      const records = response.data?.data || [];
 
-  const [isViewModalOpen, setIsViewModalOpen] = useState(false);
-  const [viewAttendance, setViewAttendance] = useState(null);
+      const activeEnrollments = records.filter(
+        (item) => item.status === "active"
+      );
 
-  // GET: Fetch student attendance
-  const fetchAttendance = useCallback(
-    async (studentName = "") => {
-      setLoading(true);
+      setEnrollments(activeEnrollments);
 
-      try {
-        const [year, month] = selectedMonth
-          ? selectedMonth.split("-")
-          : ["", ""];
+      return activeEnrollments;
+    } catch (error) {
+      console.error("Failed to fetch enrolled students:", error);
 
-        const response =
-          await studentAttendanceApi.getStudentAttendance({
-            page: currentPage,
-            limit: itemsPerPage,
-            student_name: String(studentName ?? "").trim(),
-            status: statusFilter,
-            attendance_date: attendanceDate,
-            month: month ? Number(month) : "",
-            year: year ? Number(year) : "",
-          });
+      toast.error(
+        getErrorMessage(error, "Failed to fetch enrolled students.")
+      );
 
-        const result = response.data;
+      setEnrollments([]);
+      return [];
+    }
+  }, []);
 
-        setAttendance(
-          Array.isArray(result.data) ? result.data : []
-        );
+  // Generate unique active classes
+  const classes = useMemo(() => {
+    const uniqueClasses = new Map();
 
-        setStats(result.stats || {});
-
-        setPagination({
-          current_page: result.pagination?.current_page || 1,
-          per_page: result.pagination?.per_page || itemsPerPage,
-          last_page: result.pagination?.last_page || 1,
-          total: result.pagination?.total || 0,
+    enrollments.forEach((item) => {
+      if (item.class_id) {
+        uniqueClasses.set(String(item.class_id), {
+          id: item.class_id,
+          name: item.class_name || `Class ${item.class_id}`,
+          status: "active",
         });
-
-        return result;
-      } catch (error) {
-        console.error(
-          "Failed to fetch student attendance:",
-          error
-        );
-
-        toast.error(
-          getErrorMessage(
-            error,
-            "Failed to fetch student attendance."
-          )
-        );
-
-        setAttendance([]);
-        setStats({});
-
-        setPagination({
-          ...EMPTY_PAGINATION,
-          current_page: currentPage,
-          per_page: itemsPerPage,
-        });
-
-        return null;
-      } finally {
-        setLoading(false);
       }
-    },
-    [
-      currentPage,
-      itemsPerPage,
-      statusFilter,
-      attendanceDate,
-      selectedMonth,
-    ]
-  );
-
-  // GET: Fetch student dropdown options
-// GET: Fetch student dropdown options
-const fetchStudentOptions = useCallback(async () => {
-  setStudentLoading(true);
-
-  try {
-    const response = await studentApi.getStudents({
-      limit: 100,
     });
 
-    const students = response.data?.data || [];
+    return Array.from(uniqueClasses.values());
+  }, [enrollments]);
 
-    const options = students.map((student) => ({
-      value: student.id,
-      label: String(student.name ?? ""),
-      admission_number: student.admission_number,
-      details: student,
-    }));
-
-    setStudentOptions(options);
-  } catch (error) {
-    console.error(
-      "Failed to fetch student options:",
-      error
-    );
-
-    toast.error(
-      getErrorMessage(
-        error,
-        "Failed to fetch student options."
+  // Reset selected class if it no longer exists
+  useEffect(() => {
+    if (
+      selectedClassId !== "all" &&
+      !classes.some(
+        (item) => String(item.id) === String(selectedClassId)
       )
+    ) {
+      setSelectedClassId("all");
+    }
+  }, [classes, selectedClassId]);
+
+  // Fetch attendance for selected month or date
+  const fetchAttendance = useCallback(async () => {
+    setLoading(true);
+
+    try {
+      const [year, month] = selectedMonth.split("-").map(Number);
+
+      const params = {
+        page: 1,
+        limit: 100,
+        month,
+        year,
+      };
+
+      // Specific date selected
+      if (attendanceDate !== "all") {
+        params.attendance_date = attendanceDate;
+      }
+
+      const response =
+        await studentAttendanceApi.getStudentAttendance(params);
+
+      setAttendance(response.data?.data || []);
+    } catch (error) {
+      console.error("Failed to fetch attendance:", error);
+
+      toast.error(
+        getErrorMessage(error, "Failed to load attendance.")
+      );
+    } finally {
+      setLoading(false);
+    }
+  }, [attendanceDate, selectedMonth]);
+
+  // Initial data loading
+  useEffect(() => {
+    fetchEnrollments();
+  }, [fetchEnrollments]);
+
+  // Fetch attendance whenever month/date changes
+  useEffect(() => {
+    fetchAttendance();
+  }, [fetchAttendance]);
+
+  // Generate month dates
+  const dates = useMemo(() => {
+    if (!selectedMonth) return [];
+
+    const [year, month] = selectedMonth.split("-").map(Number);
+
+    const totalDays = new Date(year, month, 0).getDate();
+    const today = new Date();
+
+    const isCurrentMonth =
+      year === today.getFullYear() &&
+      month === today.getMonth() + 1;
+
+    const lastDay = isCurrentMonth
+      ? today.getDate()
+      : totalDays;
+
+    const allDates = Array.from(
+      { length: lastDay },
+      (_, index) => {
+        const day = index + 1;
+
+        const date = `${year}-${String(month).padStart(
+          2,
+          "0"
+        )}-${String(day).padStart(2, "0")}`;
+
+        const dateObject = new Date(year, month - 1, day);
+
+        return {
+          day,
+          date,
+          weekday: dateObject.toLocaleDateString("en-US", {
+            weekday: "short",
+          }),
+        };
+      }
     );
 
-    setStudentOptions([]);
-  } finally {
-    setStudentLoading(false);
-  }
-}, []);
+    // All Dates selected
+    if (attendanceDate === "all") {
+      return allDates;
+    }
 
-  // Local filtering for student dropdown suggestions
-  const filteredStudents = studentOptions.filter((student) =>
-    String(student.label ?? "")
-      .toLowerCase()
-      .includes(String(searchTerm ?? "").toLowerCase())
+    // Specific date selected
+    return allDates.filter(
+      (item) => item.date === attendanceDate
+    );
+  }, [selectedMonth, attendanceDate]);
+
+  // Class-wise active student list
+  const students = useMemo(() => {
+    return enrollments
+      .filter((item) =>
+        selectedClassId === "all"
+          ? true
+          : String(item.class_id) === String(selectedClassId)
+      )
+      .filter((item) =>
+        String(item.student_name || "")
+          .toLowerCase()
+          .includes(searchTerm.toLowerCase())
+      )
+      .map((item) => ({
+        id: item.student_id,
+        name: item.student_name || "Unknown Student",
+        admission_number: item.admission_number || "-",
+        class_id: item.class_id,
+        class_name: item.class_name,
+        enrollment_id: item.id,
+      }));
+  }, [enrollments, selectedClassId, searchTerm]);
+
+  // Attendance lookup: student ID + date
+  const attendanceMap = useMemo(() => {
+    const map = new Map();
+
+    attendance.forEach((record) => {
+      map.set(
+        `${record.student_id}_${record.attendance_date}`,
+        record
+      );
+    });
+
+    return map;
+  }, [attendance]);
+
+  // Create or update attendance after user interaction
+  const handleStatusChange = useCallback(
+    async (studentId, date, status) => {
+      const key = `${studentId}_${date}`;
+
+      // Prevent Sunday attendance
+      if (new Date(`${date}T00:00:00`).getDay() === 0) {
+        toast.error("Sunday attendance cannot be marked.");
+        return;
+      }
+
+      if (savingCell) return;
+
+      const existingRecord = attendanceMap.get(key);
+
+      // Do not create unnecessary absent records
+      if (!existingRecord && status === "absent") return;
+
+      // Do not update if status is unchanged
+      if (existingRecord?.status === status) return;
+
+      setSavingCell(key);
+
+      try {
+        const payload = {
+          student_id: Number(studentId),
+          attendance_date: date,
+          status,
+          remarks: existingRecord?.remarks ?? null,
+        };
+
+        let response;
+
+        if (existingRecord?.id) {
+          response = await studentAttendanceApi.updateStudentAttendance(
+            existingRecord.id,
+            payload
+          );
+        } else {
+          response = await studentAttendanceApi.createStudentAttendance(
+            payload
+          );
+        }
+
+        const savedRecord = response.data?.data;
+
+        if (!savedRecord?.id) {
+          throw new Error(
+            "Attendance saved, but record ID was not returned."
+          );
+        }
+
+        setAttendance((previous) => {
+          const updatedRecord = {
+            ...existingRecord,
+            ...savedRecord,
+            ...payload,
+          };
+
+          if (existingRecord) {
+            return previous.map((item) =>
+              item.id === existingRecord.id
+                ? updatedRecord
+                : item
+            );
+          }
+
+          return [...previous, updatedRecord];
+        });
+
+        toast.success("Attendance updated successfully.");
+      } catch (error) {
+        console.error("Failed to update attendance:", error);
+
+        const errors = error?.response?.data?.errors;
+
+        if (errors) {
+          Object.values(errors)
+            .flat()
+            .filter(Boolean)
+            .forEach((message) => toast.error(message));
+        } else {
+          toast.error(
+            getErrorMessage(error, "Failed to update attendance.")
+          );
+        }
+      } finally {
+        setSavingCell("");
+      }
+    },
+    [attendanceMap, savingCell]
   );
 
-  // Select student from dropdown
-  const handleSelectStudent = useCallback((student) => {
-    setSelectedStudent(student);
-    setSearchTerm(String(student?.label ?? ""));
-    setIsDropdownOpen(false);
-    setCurrentPage(1);
+  // Class tab change
+  const handleClassChange = useCallback((value) => {
+    setSelectedClassId(String(value));
   }, []);
 
-  // Search input
+  const handleClassTabChange = handleClassChange;
+
+  // Month change: reset to All Dates
+  const handleMonthChange = useCallback((value) => {
+    if (!value) return;
+
+    setSelectedMonth(value);
+    setAttendanceDate("all");
+  }, []);
+
+  // Date tab change
+  const handleDateChange = useCallback(
+    (value) => {
+      if (!value) return;
+
+      // All Dates selected
+      if (value === "all") {
+        setAttendanceDate("all");
+        return;
+      }
+
+      // Prevent selecting a date outside selected month
+      if (!value.startsWith(`${selectedMonth}-`)) return;
+
+      // Prevent selecting future dates in current month
+      const today = new Date();
+      const [year, month] = selectedMonth.split("-").map(Number);
+
+      const isCurrentMonth =
+        year === today.getFullYear() &&
+        month === today.getMonth() + 1;
+
+      if (isCurrentMonth && value > today.toISOString().slice(0, 10)) {
+        return;
+      }
+
+      setAttendanceDate(value);
+    },
+    [selectedMonth]
+  );
+
+  // Student search
   const handleSearchChange = useCallback((event) => {
-    const value = event?.target?.value ?? "";
-
-    setSearchTerm(String(value));
-    setSelectedStudent(null);
-    setIsDropdownOpen(true);
-    setCurrentPage(1);
+    setSearchTerm(
+      typeof event === "string" ? event : event.target.value
+    );
   }, []);
 
-  // Clear search
   const handleClearSearch = useCallback(() => {
     setSearchTerm("");
-    setSelectedStudent(null);
-    setIsDropdownOpen(false);
-    setCurrentPage(1);
   }, []);
 
-  // Status filter
-  const handleStatusChange = useCallback((value) => {
-    setStatusFilter(String(value ?? ""));
-    setCurrentPage(1);
-  }, []);
+  // Filtered students for search dropdown
+  const filteredStudents = useMemo(() => {
+    return enrollments
+      .filter((item) =>
+        String(item.student_name || "")
+          .toLowerCase()
+          .includes(searchTerm.toLowerCase())
+      )
+      .map((item) => ({
+        value: item.student_id,
+        id: item.student_id,
+        label: item.student_name || "Unknown Student",
+        admission_number: item.admission_number || "-",
+        class_id: item.class_id,
+        class_name: item.class_name,
+        enrollment_id: item.id,
+        details: item,
+      }));
+  }, [enrollments, searchTerm]);
 
-  // Daily date filter
-  const handleDateChange = useCallback((value) => {
-    setAttendanceDate(String(value ?? ""));
-    setCurrentPage(1);
-  }, []);
+  // Selected class details
+  const selectedClass = classes.find(
+    (item) => String(item.id) === String(selectedClassId)
+  );
 
-  // Month filter
-  const handleMonthChange = useCallback((value) => {
-    setSelectedMonth(String(value ?? ""));
-    setAttendanceDate("");
-    setCurrentPage(1);
-  }, []);
+  // Total active enrolled students
+  const activeCount = enrollments.length;
 
-  // Clear filters
-  const handleClearFilters = useCallback(() => {
-    setSearchTerm("");
-    setSelectedStudent(null);
-    setStatusFilter("");
-    setAttendanceDate("");
-    setSelectedMonth(getCurrentMonth());
-    setCurrentPage(1);
-  }, []);
+  // Class-wise student counts
+  const classTabCounts = useMemo(() => {
+    const counts = {};
+
+    enrollments.forEach((item) => {
+      const classId = String(item.class_id);
+
+      counts[classId] = (counts[classId] || 0) + 1;
+    });
+
+    return counts;
+  }, [enrollments]);
+
+  // Attendance statistics
+  const stats = useMemo(() => {
+    const studentIds = new Set(
+      students.map((student) => student.id)
+    );
+
+    const classAttendance = attendance.filter((record) =>
+      studentIds.has(record.student_id)
+    );
+
+    return {
+      total: students.length,
+      total_students: students.length,
+      present: classAttendance.filter(
+        (item) => item.status === "present"
+      ).length,
+      absent: classAttendance.filter(
+        (item) => item.status === "absent"
+      ).length,
+      leave: classAttendance.filter(
+        (item) => item.status === "leave"
+      ).length,
+      late: classAttendance.filter(
+        (item) => item.status === "late"
+      ).length,
+    };
+  }, [attendance, students]);
 
   // Clear all filters
   const handleClearAllFilters = useCallback(() => {
-    handleClearFilters();
-    setIsDropdownOpen(false);
-  }, [handleClearFilters]);
-
-  // Pagination limit
-  const handleLimitChange = useCallback((value) => {
-    setItemsPerPage(Number(value));
-    setCurrentPage(1);
+    setSearchTerm("");
+    setSelectedClassId("all");
   }, []);
 
-  // Create attendance modal
-  const openCreateModal = useCallback(() => {
-    setSelectedAttendance(null);
-    setIsModalOpen(true);
-  }, []);
+  // Displayed attendance
+  const displayedAttendance = useMemo(() => {
+    return attendance.filter((record) =>
+      students.some(
+        (student) => student.id === record.student_id
+      )
+    );
+  }, [attendance, students]);
 
-  // Edit attendance modal
-  const openEditModal = useCallback((record) => {
-    setSelectedAttendance(record);
-    setIsModalOpen(true);
-  }, []);
-
-  // Close attendance modal
-  const closeModal = useCallback(() => {
-    setIsModalOpen(false);
-    setSelectedAttendance(null);
-  }, []);
-
-  // View attendance modal
-  const openViewModal = useCallback((record) => {
-    setViewAttendance(record);
-    setIsViewModalOpen(true);
-  }, []);
-
-  const closeViewModal = useCallback(() => {
-    setViewAttendance(null);
-    setIsViewModalOpen(false);
-  }, []);
-
-  // POST / PUT: Create or update attendance
-  const handleSaveAttendance = useCallback(
-    async (data) => {
-      setSaving(true);
-
-      try {
-        if (selectedAttendance?.id) {
-          await studentAttendanceApi.updateStudentAttendance(
-            selectedAttendance.id,
-            data
-          );
-
-          toast.success(
-            "Student attendance updated successfully."
-          );
-        } else {
-          await studentAttendanceApi.createStudentAttendance(data);
-
-          toast.success(
-            "Student attendance created successfully."
-          );
-        }
-
-        closeModal();
-
-        await fetchAttendance(searchTerm.trim());
-
-        return true;
-      } catch (error) {
-        console.error(
-          "Failed to save student attendance:",
-          error
-        );
-
-        const validationErrors = getValidationErrors(error);
-
-        if (validationErrors.length) {
-          validationErrors.forEach((message) => {
-            toast.error(message);
-          });
-        } else {
-          toast.error(
-            getErrorMessage(
-              error,
-              selectedAttendance
-                ? "Failed to update student attendance."
-                : "Failed to create student attendance."
-            )
-          );
-        }
-
-        return false;
-      } finally {
-        setSaving(false);
-      }
-    },
-    [
-      selectedAttendance,
-      closeModal,
-      fetchAttendance,
-      searchTerm,
-    ]
-  );
-
-  // DELETE: Delete attendance
-  const handleDeleteAttendance = useCallback(
-    async (id) => {
-      if (!id) {
-        toast.error("Attendance ID is missing.");
-        return false;
-      }
-
-      const confirmed = window.confirm(
-        "Are you sure you want to delete this attendance record?"
-      );
-
-      if (!confirmed) return false;
-
-      setDeleting(true);
-
-      try {
-        await studentAttendanceApi.deleteStudentAttendance(id);
-
-        toast.success(
-          "Student attendance deleted successfully."
-        );
-
-        await fetchAttendance(searchTerm.trim());
-
-        return true;
-      } catch (error) {
-        console.error(
-          "Failed to delete student attendance:",
-          error
-        );
-
-        toast.error(
-          getErrorMessage(
-            error,
-            "Failed to delete student attendance."
-          )
-        );
-
-        return false;
-      } finally {
-        setDeleting(false);
-      }
-    },
-    [fetchAttendance, searchTerm]
-  );
-
-  // Table row actions
-  const getRowActions = useCallback(
-    (row) => [
-      {
-        label: "View Attendance",
-        icon: <Eye size={14} />,
-        onClick: (selectedRow) =>
-          openViewModal(selectedRow || row),
-      },
-      {
-        label: "Edit Attendance",
-        icon: <Pencil size={14} />,
-        onClick: (selectedRow) =>
-          openEditModal(selectedRow || row),
-      },
-      {
-        label: "Delete Attendance",
-        icon: <Trash2 size={14} />,
-        variant: "danger",
-        onClick: (selectedRow) =>
-          handleDeleteAttendance((selectedRow || row).id),
-      },
-    ],
-    [
-      openViewModal,
-      openEditModal,
-      handleDeleteAttendance,
-    ]
-  );
-
-  // Export attendance
+  // Export attendance CSV
   const handleExport = useCallback(() => {
-    if (!attendance.length) {
-      toast.error("No attendance records to export.");
+    if (!displayedAttendance.length) {
+      toast.error("No attendance records available to export.");
       return;
     }
 
-    try {
-      const headers = [
-        "ID",
-        "Student ID",
-        "Student Name",
-        "Attendance Date",
-        "Status",
-        "Remarks",
-      ];
+    const headers = [
+      "Student ID",
+      "Attendance Date",
+      "Status",
+      "Remarks",
+    ];
 
-      const rows = attendance.map((item) => [
-        item.id,
-        item.student_id,
-        item.student_name,
-        item.attendance_date,
-        item.status,
-        item.remarks,
-      ]);
+    const rows = displayedAttendance.map((record) => [
+      record.student_id,
+      record.attendance_date,
+      record.status,
+      record.remarks || "",
+    ]);
 
-      const csv = [headers, ...rows]
-        .map((row) =>
-          row
-            .map(
-              (value) =>
-                `"${String(value ?? "").replace(/"/g, '""')}"`
-            )
-            .join(",")
-        )
-        .join("\n");
+    const csvContent = [headers, ...rows]
+      .map((row) =>
+        row
+          .map((value) => `"${String(value ?? "").replace(/"/g, '""')}"`)
+          .join(",")
+      )
+      .join("\n");
 
-      const blob = new Blob([csv], {
-        type: "text/csv;charset=utf-8;",
-      });
+    const blob = new Blob([csvContent], {
+      type: "text/csv;charset=utf-8;",
+    });
 
-      const url = URL.createObjectURL(blob);
-      const link = document.createElement("a");
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement("a");
 
-      link.href = url;
-      link.download = "student-attendance.csv";
-      link.click();
+    link.href = url;
 
-      URL.revokeObjectURL(url);
+    link.download = `student-attendance-${selectedMonth}-${
+      attendanceDate === "all" ? "all-dates" : attendanceDate
+    }.csv`;
 
-      toast.success(
-        `Exported ${attendance.length} attendance records.`
-      );
-    } catch (error) {
-      console.error(
-        "Failed to export student attendance:",
-        error
-      );
+    link.click();
 
-      toast.error("Failed to export student attendance.");
-    }
-  }, [attendance]);
+    URL.revokeObjectURL(url);
+  }, [displayedAttendance, attendanceDate, selectedMonth]);
 
-  // Derived data
-  const displayedAttendance = attendance;
-  const paginatedAttendance = attendance;
-
-  const totalPages = Math.max(
-    1,
-    Number(pagination.last_page || 1)
-  );
-
-  // Month is the default filter
   const hasFilters = Boolean(
-    searchTerm || statusFilter || attendanceDate
+    searchTerm || selectedClassId !== "all"
   );
-
-  // Debounced backend search and filter
-  useEffect(() => {
-    const timer = setTimeout(() => {
-      fetchAttendance(searchTerm.trim());
-    }, 300);
-
-    return () => clearTimeout(timer);
-  }, [fetchAttendance, searchTerm]);
-
-  // Fetch student dropdown options
-  useEffect(() => {
-    fetchStudentOptions();
-  }, [fetchStudentOptions]);
 
   return {
-    // Attendance
+    enrollments,
+    classes,
+    students,
+    dates,
     attendance,
-    displayedAttendance,
-    paginatedAttendance,
+    attendanceMap,
     stats,
-    loading,
-    saving,
-    deleting,
 
-    // Student dropdown
-    studentOptions,
-    studentLoading,
-    filteredStudents,
-    isDropdownOpen,
-    setIsDropdownOpen,
-    selectedStudent,
-    handleSelectStudent,
-
-    // Filters
-    searchTerm,
-    statusFilter,
-    attendanceDate,
+    selectedClassId,
+    selectedClassTab: selectedClassId,
+    selectedClass,
     selectedMonth,
+    attendanceDate,
+    searchTerm,
+
+    activeCount,
+    classTabCounts,
+
+    filteredStudents,
+    displayedAttendance,
     hasFilters,
+
+    loading,
+    savingCell,
+
+    handleClassChange,
+    handleClassTabChange,
+    handleMonthChange,
+    handleDateChange,
     handleSearchChange,
     handleClearSearch,
-    handleStatusChange,
-    handleDateChange,
-    handleMonthChange,
-    handleClearFilters,
     handleClearAllFilters,
-
-    // Pagination
-    pagination,
-    currentPage,
-    itemsPerPage,
-    totalPages,
-    setCurrentPage,
-    setItemsPerPage,
-    handleLimitChange,
-
-    // Fetch and export
-    fetchAttendance,
-    fetchStudentOptions,
+    handleStatusChange,
     handleExport,
 
-    // Modal
-    isModalOpen,
-    selectedAttendance,
-    openCreateModal,
-    openEditModal,
-    closeModal,
-
-    isViewModalOpen,
-    viewAttendance,
-    openViewModal,
-    closeViewModal,
-
-    // Actions
-    handleSaveAttendance,
-    handleDeleteAttendance,
-    getRowActions,
+    fetchAttendance,
+    fetchEnrollments,
   };
 }

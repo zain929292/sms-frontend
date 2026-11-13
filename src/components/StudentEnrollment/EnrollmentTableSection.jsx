@@ -46,6 +46,10 @@ export default function EnrollmentTableSection({
                 {item.student_name || "Unknown Student"}
               </p>
 
+              <p className="text-xs font-bold text-slate-800">
+                {item.roll_number || "Unknown Roll Number"}
+              </p>
+
               <p className="text-[11px] text-slate-500">
                 Class: {item.class_name || "—"}
               </p>

@@ -7,7 +7,7 @@ import Signin from "../screens/auth/Signin.auth";
 
 // ==================== LAZY SCREENS ====================
 const Main = lazy(() => import("../screens/dashboard/Main.dashboard"));
-
+const Announcements = lazy(() => import("../screens/announcements/Announcements"));
 
 
 // Administration
@@ -26,6 +26,12 @@ const User = lazy (()=> import("../screens/Users/Users"));
 const Staff = lazy (()=> import("../screens/staff/Staff"));
 const StaffAttendance = lazy(()=> import("../screens/staffAttendance/StaffAttendance"));
 const StaffLeaveRequests = lazy(()=> import("../screens/leaveRequest/LeaveRequest"));
+const SalaryStructure = lazy(()=> import("../screens/salaryStructure/SalaryStructure"));
+const Payroll = lazy(()=> import("../screens/payroll/Payroll"));
+
+const FeeStructure = lazy(()=> import("../screens/feeStructure/FeeStructure"));
+const StudentFees = lazy(()=> import("../screens/studentFees/StudentFees"));
+const StudentFeeHistory = lazy(()=> import("../screens/studentFees/StudentFeeHistory"));
 
 /** Small spinner shown ONLY in the content area. */
 const PageLoader = () => (
@@ -44,6 +50,7 @@ const PROTECTED_ROUTES = [
   // Overview
   { path: "dashboard", element: page(Main) },
   { path: "overview/dashboard", element: page(Main) },
+  { path: "overview/announcements", element: page(Announcements)},
 
 
   // Administration
@@ -53,15 +60,22 @@ const PROTECTED_ROUTES = [
   {path:"staff/employees", element: page(Staff)},
   {path:"staff/attendance", element: page(StaffAttendance)},
   {path: "/staff/leave-requests", element: page(StaffLeaveRequests)},
+  {path: "/staff/salary-structure", element: page(SalaryStructure)},
+  {path: "/finance/payroll", element: page(Payroll)},
 
-  {path: "students" , element: page(Students)},
-  {path: "student-promotion" , element: page(StudentEnrollments)},
+  {path: "students/admission" , element: page(Students)},
+  {path: "students" , element: page(StudentEnrollments)},
   {path: "operations/student-attendance" , element: page(StudentAttendance)},  
 
   {path: "academic/session" , element: page(AcademicSessions)},
   {path: "academics/classes" , element: page(Classes)},
   {path: "academics/subjects" , element: page(Subjects)},
   {path: "academics/timetable" , element: page(Timetable)},
+
+  // Finance
+  {path: "finance/fee-structure" , element: page(FeeStructure)},
+  {path: "finance/fees" , element: page(StudentFees)},
+  {path: "finance/student-fee-history/:studentId" , element: page(StudentFeeHistory)},
 
 ];
 

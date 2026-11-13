@@ -15,6 +15,7 @@ import { useModalAnimation } from "../../../shared/useModalAnimation.hook";
 
 const EMPTY_FORM = {
   student_id: "",
+  roll_number: "",
   class_id: "",
   academic_session_id: "",
   enrollment_date: new Date().toISOString().slice(0, 10),
@@ -90,6 +91,7 @@ const StudentEnrollmentModal = ({
     const nextForm = {
       ...EMPTY_FORM,
       student_id: String(source.student_id ?? ""),
+      roll_number: source.roll_number ?? "",
       class_id: String(source.class_id ?? ""),
       academic_session_id: String(
         source.academic_session_id ?? ""
@@ -140,13 +142,7 @@ const StudentEnrollmentModal = ({
     setErrors({});
     setLoadError("");
     setOpenDropdown(null);
-  }, [
-    isOpen,
-    enrollmentData,
-    students,
-    classes,
-    sessions,
-  ]);
+  }, [isOpen, enrollmentData, students, classes, sessions]);
 
   /* -------------------------------------------------------------------------- */
   /*                            Load Dropdown Data                              */
@@ -224,6 +220,10 @@ const StudentEnrollmentModal = ({
     onClose();
   };
 
+  /* -------------------------------------------------------------------------- */
+  /*                               Submit Handler                               */
+  /* -------------------------------------------------------------------------- */
+
   const handleSubmit = async (event) => {
     event.preventDefault();
 
@@ -231,6 +231,10 @@ const StudentEnrollmentModal = ({
 
     if (!form.student_id) {
       nextErrors.student_id = "Please select a student.";
+    }
+
+    if (!form.roll_number.trim()) {
+      nextErrors.roll_number = "Roll number is required.";
     }
 
     if (!form.class_id) {
@@ -257,10 +261,9 @@ const StudentEnrollmentModal = ({
 
     await onSubmit({
       student_id: Number(form.student_id),
+      roll_number: form.roll_number.trim(),
       class_id: Number(form.class_id),
-      academic_session_id: Number(
-        form.academic_session_id
-      ),
+      academic_session_id: Number(form.academic_session_id),
       enrollment_date: form.enrollment_date || null,
       status: form.status,
       remarks: form.remarks.trim() || null,
@@ -308,12 +311,7 @@ const StudentEnrollmentModal = ({
   /*                              Select Handler                                */
   /* -------------------------------------------------------------------------- */
 
-  const selectItem = (
-    field,
-    item,
-    setSearch,
-    label
-  ) => {
+  const selectItem = (field, item, setSearch, label) => {
     setForm((previous) => ({
       ...previous,
       [field]: String(item.id),
@@ -351,10 +349,7 @@ const StudentEnrollmentModal = ({
             : "translate-y-4 scale-95 opacity-0"
         }`}
       >
-        <form
-          onSubmit={handleSubmit}
-          className="p-5 sm:p-6"
-        >
+        <form onSubmit={handleSubmit} className="p-5 sm:p-6">
           <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
 
             {/* Student */}
@@ -401,6 +396,18 @@ const StudentEnrollmentModal = ({
                 </p>
               )}
             </div>
+
+            {/* Roll Number */}
+            <FormField
+              label="Roll Number"
+              name="roll_number"
+              value={form.roll_number}
+              onChange={handleChange}
+              placeholder="Enter roll number"
+              error={errors.roll_number}
+              required
+              disabled={saving}
+            />
 
             {/* Class */}
             <div>
@@ -581,6 +588,7 @@ const StudentEnrollmentModal = ({
                 loadingOptions ||
                 Boolean(loadError) ||
                 !form.student_id ||
+                !form.roll_number.trim() ||
                 !form.class_id ||
                 !form.academic_session_id
               }

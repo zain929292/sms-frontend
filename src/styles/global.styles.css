@@ -57,7 +57,38 @@
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
   }
+/* Announcement Marquee Animation */
+@keyframes announcement-scroll {
+  from {
+    transform: translateX(0);
+  }
 
+  to {
+    transform: translateX(-50%);
+  }
+}
+
+.announcement-marquee {
+  width: 100%;
+  overflow: hidden;
+}
+
+.announcement-marquee-track {
+  display: flex;
+  width: max-content;
+  animation: announcement-scroll 35s linear infinite;
+}
+
+.announcement-marquee:hover .announcement-marquee-track {
+  animation-play-state: paused;
+}
+
+/* Accessibility */
+@media (prefers-reduced-motion: reduce) {
+  .announcement-marquee-track {
+    animation: none;
+  }
+}
   /* Responsive Typography */
   @media (max-width: 1200px) {
     body {
