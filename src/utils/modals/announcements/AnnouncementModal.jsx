@@ -100,14 +100,21 @@ export default function AnnouncementModal({
       disabled={saving}
     >
       <form onSubmit={handleSubmit} className="space-y-4 p-5">
-        <FormField
-          label="Announcement Notice"
+      <div className="w-full">
+        <label className="mb-1.5 block text-sm font-medium text-gray-700">
+          Announcement Notice <span className="text-red-500">*</span>
+        </label>
+
+        <textarea
           name="notice"
           value={form.notice}
           onChange={handleChange}
           placeholder="Enter announcement details..."
+          rows={4}
           required
+          className="w-full resize-y rounded-lg border border-gray-300 bg-white px-3 py-2.5 text-sm text-gray-700 outline-none transition placeholder:text-gray-400 focus:border-teal-600 focus:ring-2 focus:ring-teal-100"
         />
+      </div>
 
         <FormField
           label="Audience"

@@ -4,6 +4,7 @@ import { Routes, Route, Navigate } from "react-router-dom";
 import ProtectedRoute from "./Protected.router";
 import DashboardLayout from "../layout/Layout.layout";
 import Signin from "../screens/auth/Signin.auth";
+import { Eclipse } from "lucide-react";
 
 // ==================== LAZY SCREENS ====================
 const Main = lazy(() => import("../screens/dashboard/Main.dashboard"));
@@ -28,6 +29,7 @@ const StaffAttendance = lazy(()=> import("../screens/staffAttendance/StaffAttend
 const StaffLeaveRequests = lazy(()=> import("../screens/leaveRequest/LeaveRequest"));
 const SalaryStructure = lazy(()=> import("../screens/salaryStructure/SalaryStructure"));
 const Payroll = lazy(()=> import("../screens/payroll/Payroll"));
+const Expense = lazy(()=> import("../screens/expense/Expenses"));
 
 const FeeStructure = lazy(()=> import("../screens/feeStructure/FeeStructure"));
 const StudentFees = lazy(()=> import("../screens/studentFees/StudentFees"));
@@ -62,6 +64,7 @@ const PROTECTED_ROUTES = [
   {path: "/staff/leave-requests", element: page(StaffLeaveRequests)},
   {path: "/staff/salary-structure", element: page(SalaryStructure)},
   {path: "/finance/payroll", element: page(Payroll)},
+  {path: "finance/expenses", element: page(Expense)},
 
   {path: "students/admission" , element: page(Students)},
   {path: "students" , element: page(StudentEnrollments)},

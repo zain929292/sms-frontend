@@ -17,7 +17,7 @@ export const SidebarMobile = ({ isOpen, onClose }) => {
             >
               <GraduationCap size={18} className="text-white" />
             </div>
-            <span className="font-bold">Al Qamar School</span>
+            <span className="font-bold">Sky School</span>
           </div>
           <button onClick={onClose} aria-label="Close menu">
             <X size={20} />
