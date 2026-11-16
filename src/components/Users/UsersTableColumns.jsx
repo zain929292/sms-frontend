@@ -118,6 +118,7 @@ const UsersTableColumns = () => [
       </span>
     ),
   },
+  
  ];
 
 export default UsersTableColumns;

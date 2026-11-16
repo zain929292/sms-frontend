@@ -34,14 +34,14 @@ const useExpenses = () => {
     try {
       const response = await api.get(`${API_URL}/details`, {
         params: {
-  page: params.page || 1,
-  limit: params.limit || 10,
-  search: params.search || "",
-  category: params.category || "",
-  status: params.status || "",
-  payment_method: params.payment_method || "",
-  expense_date: params.expense_date || "",
-},
+        page: params.page || 1,
+        limit: params.limit || 10,
+        search: params.search || "",
+        category: params.category || "",
+        status: params.status || "",
+        payment_method: params.payment_method || "",
+        expense_date: params.expense_date || "",
+      },
       });
 
       const result = response?.data;
