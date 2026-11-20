@@ -11,7 +11,7 @@ const staffApi = {
   },
 
   updateStaff(id, data) {
-    data.append("_method", "PUT");
+    data.set("_method", "PUT");
 
     return Api.post(`/staff/update/${id}`, data);
   },

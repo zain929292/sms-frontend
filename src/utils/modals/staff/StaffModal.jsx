@@ -56,17 +56,27 @@ const StaffModal = ({
 
   const [errors, setErrors] = useState({});
 
-  const isEdit = Boolean(staff?.id);
+  // User's existing staff record
+  const staffDetails = staff?.user_details ?? null;
 
-  // Load selected user and staff details
+  // Staff table primary key
+  const staffId = staffDetails?.id ?? null;
+
+  // Users table primary key
+  const userId = staff?.id ?? staffDetails?.user_id ?? "";
+
+  // Edit mode depends only on existing staff record
+  const isEdit = Boolean(staffId);
+
+  // Load data when modal opens or selected user changes
   useEffect(() => {
     if (!open) return;
 
-    const source = staff || {};
+    const source = staff?.user_details ?? {};
 
-    const nextForm = {
+    setForm({
       ...EMPTY_FORM,
-      user_id: String(source.user_id ?? source.id ?? ""),
+      user_id: String(userId),
       phone: source.phone ?? "",
       gender: source.gender ?? "",
       dob: source.dob?.substring(0, 10) ?? "",
@@ -79,34 +89,38 @@ const StaffModal = ({
       employment_type: source.employment_type ?? "permanent",
       emergency_contact: source.emergency_contact ?? "",
       remarks: source.remarks ?? "",
-    };
+    });
 
-    setForm(nextForm);
     setPhotoPreview(source.photo ?? "");
     setPhoto(null);
     setRemovePhoto(false);
     setErrors({});
   }, [open, staff]);
 
-  // Handle input changes
+  // Handle form changes
   const handleChange = (e) => {
     const { name, value } = e.target;
 
-    setForm((prev) => ({
-      ...prev,
+    setForm((previous) => ({
+      ...previous,
       [name]: value,
+    }));
+
+    setErrors((previous) => ({
+      ...previous,
+      [name]: "",
     }));
   };
 
-  // Handle photo upload
+  // Upload photo
   const handlePhotoChange = (e) => {
     const file = e.target.files?.[0];
 
     if (!file) return;
 
     if (!file.type.startsWith("image/")) {
-      setErrors((prev) => ({
-        ...prev,
+      setErrors((previous) => ({
+        ...previous,
         photo: "Please select a valid image.",
       }));
 
@@ -115,8 +129,8 @@ const StaffModal = ({
     }
 
     if (file.size > 2 * 1024 * 1024) {
-      setErrors((prev) => ({
-        ...prev,
+      setErrors((previous) => ({
+        ...previous,
         photo: "Image size must be less than 2MB.",
       }));
 
@@ -128,8 +142,8 @@ const StaffModal = ({
     setPhotoPreview(URL.createObjectURL(file));
     setRemovePhoto(false);
 
-    setErrors((prev) => ({
-      ...prev,
+    setErrors((previous) => ({
+      ...previous,
       photo: "",
     }));
   };
@@ -140,8 +154,8 @@ const StaffModal = ({
     setPhotoPreview("");
     setRemovePhoto(true);
 
-    setErrors((prev) => ({
-      ...prev,
+    setErrors((previous) => ({
+      ...previous,
       photo: "",
     }));
   };
@@ -201,7 +215,11 @@ const StaffModal = ({
       payload.append("remove_photo", "1");
     }
 
-    onSave(payload);
+    // Pass staff primary key and user primary key separately
+    onSave(payload, {
+      staffId,
+      userId: form.user_id,
+    });
   };
 
   if (!shouldRender) return null;
@@ -224,7 +242,6 @@ const StaffModal = ({
         }`}
       >
         <form onSubmit={handleSubmit} className="p-5 sm:p-6">
-
           {/* Staff Photo */}
           <div className="mb-5 flex flex-col items-center">
             <div className="relative">
@@ -281,8 +298,7 @@ const StaffModal = ({
 
           {/* Staff Information */}
           <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-
-            {/* Selected User - Read Only */}
+            {/* Selected User */}
             <div>
               <label className="mb-1.5 block text-sm font-medium text-slate-700">
                 Selected User
@@ -292,9 +308,7 @@ const StaffModal = ({
                 <UserRound size={16} className="text-teal-700" />
 
                 <span>
-                  {staff?.user_name ||
-                    staff?.name ||
-                    `User ID: ${form.user_id}`}
+                  {staff?.name || `User ID: ${form.user_id}`}
                 </span>
 
                 <span className="ml-auto text-xs text-slate-400">

@@ -21,7 +21,6 @@ export default function Users() {
   const s = useStaff();
 
   const handleAddStaffDetails = (user) => {
-    u.closeViewModal();
     setSelectedStaffUser(user);
     setIsStaffModalOpen(true);
   };
@@ -30,12 +29,28 @@ export default function Users() {
     onAddStaffDetails: handleAddStaffDetails,
   });
 
+  // Close staff modal
   const handleCloseStaffModal = () => {
+    if (s.saving) return;
+
     setIsStaffModalOpen(false);
     setSelectedStaffUser(null);
   };
 
-  // Export current page users
+  // Save staff details
+  const handleSaveStaff = async (formData, meta) => {
+    const success = await s.handleSaveStaff(formData, meta);
+
+    if (success) {
+      setIsStaffModalOpen(false);
+      setSelectedStaffUser(null);
+
+      // Refresh users so updated user_details are available
+      await u.fetchUsers();
+    }
+  };
+
+  // Export users
   const handleExport = () => {
     if (!u.users.length) return;
 
@@ -75,7 +90,7 @@ export default function Users() {
       {
         key: "user-search",
         label: "Search Users",
-        value: u.searchTerm,
+        value: u.filters.name,
         onChange: u.handleSearchChange,
         onClear: () => u.handleSearchChange(""),
         placeholder: "Search user name or email...",
@@ -93,7 +108,10 @@ export default function Users() {
 
   return (
     <div className="space-y-5">
-      <UsersHeader onAddClick={u.openCreateModal} userCount={u.stats.total_users} />
+      <UsersHeader
+        onAddClick={u.openCreateModal}
+        userCount={u.stats.total_users}
+      />
 
       <UsersSummaryCards stats={u.stats} />
 
@@ -104,6 +122,7 @@ export default function Users() {
         limitOptions={USER_LIMIT_OPTIONS}
       />
 
+      {/* Create / Edit User */}
       <UserModal
         open={u.isModalOpen}
         user={u.selectedUser}
@@ -113,6 +132,7 @@ export default function Users() {
         onSubmit={u.handleSaveUser}
       />
 
+      {/* View User */}
       <UserViewModal
         isOpen={u.isViewModalOpen}
         onClose={u.closeViewModal}
@@ -120,22 +140,13 @@ export default function Users() {
         onAddStaffDetails={u.openAddModal}
       />
 
+      {/* Add / Update Staff Details */}
       <StaffModal
         open={isStaffModalOpen}
-        staff={
-          selectedStaffUser
-            ? {
-                ...selectedStaffUser.user_details,
-                user_id: selectedStaffUser.id,
-                name: selectedStaffUser.name,
-                user_name: selectedStaffUser.name,
-              }
-            : null
-        }
-        users={u.users}
+        staff={selectedStaffUser}
         saving={s.saving}
         onClose={handleCloseStaffModal}
-        onSave={s.handleSaveStaff}
+        onSave={handleSaveStaff}
       />
     </div>
   );

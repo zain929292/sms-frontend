@@ -33,7 +33,8 @@ const Expenses = () => {
   const [category, setCategory] = useState("");
   const [status, setStatus] = useState("");
   const [paymentMethod, setPaymentMethod] = useState("");
-  const [expenseDate, setExpenseDate] = useState("");
+  const [month, setMonth] = useState("");
+  const [year, setYear] = useState("");
 
   // Pagination states
   const [currentPage, setCurrentPage] = useState(1);
@@ -56,7 +57,8 @@ const Expenses = () => {
         category,
         status,
         payment_method: paymentMethod,
-        expense_date: expenseDate,
+        month,
+        year,
       });
     },
     [
@@ -67,7 +69,8 @@ const Expenses = () => {
       category,
       status,
       paymentMethod,
-      expenseDate,
+      month,
+      year,
     ],
   );
 
@@ -116,8 +119,14 @@ const Expenses = () => {
     setCurrentPage(1);
   }, []);
 
-  const handleExpenseDateChange = useCallback((value) => {
-    setExpenseDate(value);
+  const handleMonthChange = useCallback((value) => {
+    setMonth(value);
+    setSelectedExpenseId(null);
+    setCurrentPage(1);
+  }, []);
+
+  const handleYearChange = useCallback((value) => {
+    setYear(value);
     setSelectedExpenseId(null);
     setCurrentPage(1);
   }, []);
@@ -129,7 +138,8 @@ const Expenses = () => {
     setCategory("");
     setStatus("");
     setPaymentMethod("");
-    setExpenseDate("");
+    setMonth("");
+    setYear("");
     setCurrentPage(1);
   }, []);
 
@@ -187,7 +197,7 @@ const Expenses = () => {
     <div className="space-y-6">
       <ExpenseHeader
         expensesCount={total}
-        monthlyExpenses={stats.monthly_expenses}
+        monthlyExpenses={stats.monthly}
         onAddExpense={openCreateModal}
       />
 
@@ -205,11 +215,13 @@ const Expenses = () => {
         category={category}
         status={status}
         paymentMethod={paymentMethod}
-        expenseDate={expenseDate}
+        month={month}
+        year={year}
         onCategoryChange={handleCategoryChange}
         onStatusChange={handleStatusChange}
         onPaymentMethodChange={handlePaymentMethodChange}
-        onExpenseDateChange={handleExpenseDateChange}
+        onMonthChange={handleMonthChange}
+        onYearChange={handleYearChange}
         onClearAll={handleClearAllFilters}
       />
 

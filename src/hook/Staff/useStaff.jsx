@@ -1,4 +1,3 @@
-
 import { useCallback, useEffect, useState } from "react";
 import { Eye, Pencil, Trash2 } from "lucide-react";
 import toast from "react-hot-toast";
@@ -20,7 +19,9 @@ const EMPTY_PAGINATION = {
 };
 
 const getErrorMessage = (error, fallback) =>
-  error.response?.data?.message || error.message || fallback;
+  error.response?.data?.message ||
+  error.message ||
+  fallback;
 
 const getValidationErrors = (error) => {
   const errors = error.response?.data?.errors;
@@ -51,7 +52,7 @@ export default function useStaff() {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [selectedStaff, setSelectedStaff] = useState(null);
 
-  // GET: Fetch staff with backend filters, pagination and stats
+  // GET: Fetch staff
   const fetchStaff = useCallback(
     async (params = {}, showLoader = true) => {
       if (showLoader) setLoading(true);
@@ -89,6 +90,8 @@ export default function useStaff() {
         );
 
         setStats({
+          ...EMPTY_STATS,
+          ...(result.stats || {}),
           total_teachers: Number(
             result.stats?.total_teachers ?? 0
           ),
@@ -101,7 +104,6 @@ export default function useStaff() {
           contract_teachers: Number(
             result.stats?.contract_teachers ?? 0
           ),
-          ...result.stats,
         });
 
         return result;
@@ -126,7 +128,7 @@ export default function useStaff() {
     [page, limit]
   );
 
-  // Backend filters: search and employment type
+  // Backend filters
   useEffect(() => {
     const timer = setTimeout(() => {
       fetchStaff({
@@ -138,7 +140,7 @@ export default function useStaff() {
     return () => clearTimeout(timer);
   }, [fetchStaff, search, employmentType]);
 
-  // Data already comes filtered and paginated from Laravel
+  // Backend handles filtering and pagination
   const filteredStaff = staff;
   const displayedStaff = staff;
   const paginatedStaff = staff;
@@ -176,24 +178,41 @@ export default function useStaff() {
 
   // POST / PUT: Create or update staff
   const handleSaveStaff = useCallback(
-    async (formData) => {
+    async (formData, meta = {}) => {
+      // When called from Users page, use the ID passed by StaffModal.
+      // When called from Staff page, use selectedStaff.
+      const staffId = Object.prototype.hasOwnProperty.call(
+        meta,
+        "staffId"
+      )
+        ? meta.staffId
+        : selectedStaff?.id;
+
+      const userId =
+        meta.userId || formData.get("user_id");
+
+      if (!userId) {
+        toast.error("User information is missing.");
+        return false;
+      }
+
       setSaving(true);
 
       try {
-        if (selectedStaff?.id) {
-          await staffApi.updateStaff(
-            selectedStaff.id,
-            formData
-          );
+        if (staffId) {
+          // Existing staff record
+          await staffApi.updateStaff(staffId, formData);
 
           toast.success("Staff updated successfully.");
         } else {
+          // No staff record exists
           await staffApi.createStaff(formData);
 
-          toast.success("Staff created successfully.");
+          toast.success("Staff details added successfully.");
         }
 
         closeModal();
+
         setSearch("");
         setEmploymentType("");
         setPage(1);
@@ -207,23 +226,27 @@ export default function useStaff() {
           },
           false
         );
+
+        return true;
       } catch (error) {
         const validationErrors = getValidationErrors(error);
 
         if (validationErrors.length) {
-          validationErrors.forEach((message) =>
-            toast.error(message)
-          );
+          validationErrors.forEach((message) => {
+            toast.error(message);
+          });
         } else {
           toast.error(
             getErrorMessage(
               error,
-              selectedStaff
+              staffId
                 ? "Failed to update staff."
                 : "Failed to create staff."
             )
           );
         }
+
+        return false;
       } finally {
         setSaving(false);
       }
@@ -255,7 +278,9 @@ export default function useStaff() {
         toast.success("Staff deleted successfully.");
 
         const nextPage =
-          page > 1 && staff.length === 1 ? page - 1 : page;
+          page > 1 && staff.length === 1
+            ? page - 1
+            : page;
 
         if (nextPage !== page) {
           setPage(nextPage);
@@ -288,13 +313,14 @@ export default function useStaff() {
     ]
   );
 
-  // Search handler
+  // Search
   const handleSearchChange = useCallback((value) => {
     setSearch(
       typeof value === "string"
         ? value
         : value.target.value
     );
+
     setPage(1);
   }, []);
 
@@ -342,9 +368,12 @@ export default function useStaff() {
   );
 
   return {
+    // Data
     staff,
     stats,
     pagination,
+
+    // Loading
     loading,
     saving,
     deleting,

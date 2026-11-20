@@ -17,11 +17,15 @@ const Users = lazy(() => import("../screens/user-screens/User"));
 const Students = lazy(()=> import("../screens/student/Students"));
 const StudentEnrollments = lazy (()=> import("../screens/student/StudentEnrollment"));
 const StudentAttendance = lazy (()=> import("../screens/studentAttendance/StudentAttendance"));
+const StudentResults = lazy(()=> import("../screens/examResults/ExamResults"));
 
 const AcademicSessions = lazy (()=> import("../screens/academic-sessions/AcademicSessions"));
 const Classes = lazy (()=> import("../screens/classes/Classes"));
 const Subjects = lazy (()=> import("../screens/subjects/subjects"));
 const Timetable = lazy (()=> import("../screens/timetable/timetable"));
+
+const Exams = lazy(()=> import("../screens/exam/Exams"));
+const ExamDetails = lazy(()=> import("../screens/examDetails/ExamDetails"));
 
 const User = lazy (()=> import("../screens/Users/Users"));
 const Staff = lazy (()=> import("../screens/staff/Staff"));
@@ -69,11 +73,16 @@ const PROTECTED_ROUTES = [
   {path: "students/admission" , element: page(Students)},
   {path: "students" , element: page(StudentEnrollments)},
   {path: "operations/student-attendance" , element: page(StudentAttendance)},  
+  {path: "student/result" , element: page(StudentResults)},
 
   {path: "academic/session" , element: page(AcademicSessions)},
   {path: "academics/classes" , element: page(Classes)},
   {path: "academics/subjects" , element: page(Subjects)},
   {path: "academics/timetable" , element: page(Timetable)},
+
+  // Exams
+  {path: "academics/exams", element: page(Exams)},
+  {path: "academics/exam-details/:examId", element: page(ExamDetails)},
 
   // Finance
   {path: "finance/fee-structure" , element: page(FeeStructure)},

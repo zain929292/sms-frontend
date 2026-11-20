@@ -1,3 +1,4 @@
+
 import { useCallback, useEffect, useState } from "react";
 import api from "../redux/config/Api.redux";
 import toast from "react-hot-toast";
@@ -6,7 +7,9 @@ const API_URL = "/class";
 
 const errorMessage = (error) => {
   const data = error?.response?.data;
-  const firstValidationError = Object.values(data?.errors || {}).flat()[0];
+  const firstValidationError = Object.values(
+    data?.errors || {}
+  ).flat()[0];
 
   return (
     firstValidationError ||
@@ -16,11 +19,12 @@ const errorMessage = (error) => {
   );
 };
 
-const useClasses = () => {
+const useClasses = (initialPage = 1, initialLimit = 10) => {
   const [classes, setClasses] = useState([]);
+
   const [pagination, setPagination] = useState({
-    current_page: 1,
-    per_page: 10,
+    current_page: initialPage,
+    per_page: initialLimit,
     last_page: 1,
     total: 0,
   });
@@ -28,7 +32,8 @@ const useClasses = () => {
   const [loading, setLoading] = useState(false);
   const [saving, setSaving] = useState(false);
 
-  const fetchClasses = useCallback(async (page = 1, limit = 10) => {
+  // Fetch Classes
+  const fetchClasses = useCallback(async (page = initialPage, limit = initialLimit) => {
     setLoading(true);
 
     try {
@@ -39,44 +44,51 @@ const useClasses = () => {
       const responseData = response?.data;
       const result = responseData?.data;
 
-      setClasses(
-        Array.isArray(result)
-          ? result
-          : Array.isArray(result?.data)
-            ? result.data
-            : []
-      );
+      const records = Array.isArray(result)
+        ? result
+        : Array.isArray(result?.data)
+          ? result.data
+          : [];
+
+      setClasses(records);
 
       if (responseData?.pagination) {
         setPagination(responseData.pagination);
       } else {
-        // Fallback agar API paginatedResponse use nahi kar rahi.
         setPagination({
           current_page: page,
           per_page: limit,
           last_page: 1,
-          total: Array.isArray(result) ? result.length : 0,
+          total: records.length,
         });
       }
     } catch (error) {
+      console.error("Failed to fetch classes:", error);
       toast.error(errorMessage(error));
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [initialPage, initialLimit]);
 
+  // Initial Fetch
   useEffect(() => {
-    fetchClasses(pagination.current_page, pagination.per_page);
-  }, [fetchClasses, pagination.current_page, pagination.per_page]);
+    fetchClasses(initialPage, initialLimit);
+  }, [fetchClasses, initialPage, initialLimit]);
 
+  // Create Class
   const createClass = async (payload) => {
     setSaving(true);
 
     try {
       await api.post(`${API_URL}/create`, payload);
+
       toast.success("Class created successfully.");
 
-      await fetchClasses(pagination.current_page, pagination.per_page);
+      await fetchClasses(
+        pagination.current_page,
+        pagination.per_page
+      );
+
       return true;
     } catch (error) {
       toast.error(errorMessage(error));
@@ -86,14 +98,20 @@ const useClasses = () => {
     }
   };
 
+  // Update Class
   const updateClass = async (id, payload) => {
     setSaving(true);
 
     try {
       await api.put(`${API_URL}/update/${id}`, payload);
+
       toast.success("Class updated successfully.");
 
-      await fetchClasses(pagination.current_page, pagination.per_page);
+      await fetchClasses(
+        pagination.current_page,
+        pagination.per_page
+      );
+
       return true;
     } catch (error) {
       toast.error(errorMessage(error));
@@ -103,9 +121,11 @@ const useClasses = () => {
     }
   };
 
+  // Delete Class
   const deleteClass = async (id) => {
     try {
       await api.delete(`${API_URL}/delete/${id}`);
+
       toast.success("Class deleted successfully.");
 
       const nextPage =
@@ -114,6 +134,7 @@ const useClasses = () => {
           : pagination.current_page;
 
       await fetchClasses(nextPage, pagination.per_page);
+
       return true;
     } catch (error) {
       toast.error(errorMessage(error));

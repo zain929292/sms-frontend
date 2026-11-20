@@ -15,12 +15,14 @@ const ExpenseFilters = ({
   category,
   status,
   paymentMethod,
-  expenseDate,
+  month,
+  year,
 
   onCategoryChange,
   onStatusChange,
   onPaymentMethodChange,
-  onExpenseDateChange,
+  onMonthChange,
+  onYearChange,
   onClearAll,
 }) => {
   const filterConfig = {
@@ -29,7 +31,7 @@ const ExpenseFilters = ({
       searchTerm,
       onSearchChange,
       onClearSearch,
-      placeholder: "Search by title, category or status...",
+      placeholder: "Search by expense title...",
       isOpen: isDropdownOpen,
       setIsOpen: setIsDropdownOpen,
       items: filteredExpenses,
@@ -72,7 +74,8 @@ const ExpenseFilters = ({
       Boolean(category) ||
       Boolean(status) ||
       Boolean(paymentMethod) ||
-      Boolean(expenseDate),
+      Boolean(month) ||
+      Boolean(year),
 
     onClearAll,
   };
@@ -85,7 +88,6 @@ const ExpenseFilters = ({
       <FilterBar {...filterConfig} />
 
       <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-4">
-        {/* Category */}
         <select
           value={category}
           onChange={(e) => onCategoryChange(e.target.value)}
@@ -103,7 +105,6 @@ const ExpenseFilters = ({
           <option value="other">Other</option>
         </select>
 
-        {/* Status */}
         <select
           value={status}
           onChange={(e) => onStatusChange(e.target.value)}
@@ -115,7 +116,6 @@ const ExpenseFilters = ({
           <option value="cancelled">Cancelled</option>
         </select>
 
-        {/* Payment Method */}
         <select
           value={paymentMethod}
           onChange={(e) => onPaymentMethodChange(e.target.value)}
@@ -128,7 +128,7 @@ const ExpenseFilters = ({
           <option value="online">Online</option>
         </select>
 
-        {/* Expense Date */}
+        {/* Month and Year */}
         <div className="relative">
           <CalendarDays
             size={16}
@@ -136,15 +136,21 @@ const ExpenseFilters = ({
           />
 
           <input
-            type="date"
-            value={expenseDate}
-            onChange={(e) => onExpenseDateChange(e.target.value)}
+            type="month"
+            value={month && year ? `${year}-${month}` : ""}
+            onChange={(e) => {
+              const [selectedYear, selectedMonth] =
+                e.target.value.split("-");
+
+              onYearChange(selectedYear || "");
+              onMonthChange(selectedMonth || "");
+            }}
             className={`${selectClass} pl-9`}
           />
         </div>
       </div>
 
-      {(category || status || paymentMethod || expenseDate) && (
+      {(category || status || paymentMethod || month || year) && (
         <button
           type="button"
           onClick={onClearAll}

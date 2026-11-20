@@ -41,6 +41,8 @@ const useExpenses = () => {
         status: params.status || "",
         payment_method: params.payment_method || "",
         expense_date: params.expense_date || "",
+        month: params.month || "",
+        year: params.year || "",
       },
       });
 

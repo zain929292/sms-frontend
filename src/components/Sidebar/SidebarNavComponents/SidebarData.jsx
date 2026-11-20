@@ -40,8 +40,10 @@ export const STATIC_GROUPS = [
     moduleName: "Student Management",
     items: [
       { label: "Student Admission", to: "/students/admission", icon: GraduationCap },
-      { label: "Students", to: "/students", icon: Users },
+      { label: "Students Enrollment", to: "/students", icon: Users },
       { label: "Student Attendance", to: "/operations/student-attendance", icon: CalendarCheck },
+      { label: "Student Fees", to: "/finance/fees", icon: DollarSign },
+      { label: "Student Results", to: "/student/result", icon: Award },
     ],
   },
 
@@ -52,7 +54,6 @@ export const STATIC_GROUPS = [
       { label: "Classes & Sections", to: "/academics/classes", icon: Building },
       { label: "Subjects", to: "/academics/subjects", icon: BookMarked },
       { label: "Timetable", to: "/academics/timetable", icon: Clock },
-      { label: "Assignments", to: "/academics/assignments", icon: NotebookPen },
       { label: "Examinations", to: "/academics/exams", icon: ClipboardList },
     ],
   },
@@ -70,7 +71,6 @@ export const STATIC_GROUPS = [
     moduleName: "Finance",
     items: [
       { label: "Fee Structure", to: "/finance/fee-structure", icon: CreditCard },
-      { label: "Fee Management", to: "/finance/fees", icon: DollarSign },
       { label: "Salary Structure", to: "/staff/salary-structure", icon: Wallet },
       { label: "Payroll", to: "/finance/payroll", icon: DollarSign },
       { label: "Expenses", to: "/finance/expenses", icon: Wallet },
