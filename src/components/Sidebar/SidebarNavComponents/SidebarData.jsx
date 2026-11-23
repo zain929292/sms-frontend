@@ -87,10 +87,10 @@ export const STATIC_GROUPS = [
   {
     moduleName: "Roles & Permissions",
     items: [
-      { label: "Roles", to: "/access-control/roles", icon: ShieldCheck },
-      { label: "Permissions", to: "/access-control/permissions", icon: KeyRound },
-      { label: "Modules", to: "/access-control/modules", icon: Layers },
-      { label: "Pages", to: "/access-control/pages", icon: Files },
+      { label: "Roles", to: "/administration/roles", icon: ShieldCheck },
+      { label: "Permissions", to: "/administration/permissions", icon: KeyRound },
+      // { label: "Modules", to: "/administration/modules", icon: Layers },
+      // { label: "Pages", to: "/administration/pages", icon: Files },
     ],
   },
 

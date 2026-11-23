@@ -39,6 +39,10 @@ const FeeStructure = lazy(()=> import("../screens/feeStructure/FeeStructure"));
 const StudentFees = lazy(()=> import("../screens/studentFees/StudentFees"));
 const StudentFeeHistory = lazy(()=> import("../screens/studentFees/StudentFeeHistory"));
 
+const Roles = lazy(() => import("../screens/role-screens/Roles"));
+const Permissions = lazy(
+  () => import("../screens/permission-screens/Permissions"),
+);
 /** Small spinner shown ONLY in the content area. */
 const PageLoader = () => (
   <div className="flex min-h-[50vh] w-full items-center justify-center">
@@ -61,7 +65,8 @@ const PROTECTED_ROUTES = [
 
   // Administration
   { path: "administration/users", element: page(Users) },
-
+  { path: "administration/roles", element: page(Roles) },
+  { path: "administration/permissions", element: page(Permissions) },
   {path: "users" , element: page(User)},
   {path:"staff/employees", element: page(Staff)},
   {path:"staff/attendance", element: page(StaffAttendance)},
