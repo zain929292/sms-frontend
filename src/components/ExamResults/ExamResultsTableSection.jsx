@@ -65,31 +65,36 @@ export default function ExamResultsTableSection({
       </div>
 
       {/* Main Tabs */}
-      <div className="flex items-center gap-5 border-b border-slate-200 px-4">
-        <button
-          type="button"
-          onClick={() => onTabChange?.("overall")}
-          className={`border-b-2 py-3 text-xs font-semibold transition ${
-            isOverallTab
-              ? "border-teal-600 text-teal-700"
-              : "border-transparent text-slate-500 hover:text-slate-700"
-          }`}
-        >
-          Overall Results
-        </button>
 
-        <button
-          type="button"
-          onClick={() => onTabChange?.("marks")}
-          className={`border-b-2 py-3 text-xs font-semibold transition ${
-            !isOverallTab
-              ? "border-teal-600 text-teal-700"
-              : "border-transparent text-slate-500 hover:text-slate-700"
-          }`}
-        >
-          Marks Sheet
-        </button>
-      </div>
+{/* Main Tabs */}
+<div className="border-b border-slate-200 px-4 py-3">
+  <div className="inline-flex items-center gap-1 rounded-lg border border-slate-200 bg-slate-50 p-1">
+    <button
+      type="button"
+      onClick={() => onTabChange?.("overall")}
+      className={`rounded-md px-4 py-2 text-xs font-semibold transition-all duration-200 ${
+        isOverallTab
+          ? "bg-teal-700 text-white shadow-sm"
+          : "text-slate-500 hover:bg-white hover:text-slate-700"
+      }`}
+    >
+      Overall Results
+    </button>
+
+    <button
+      type="button"
+      onClick={() => onTabChange?.("marks")}
+      className={`rounded-md px-4 py-2 text-xs font-semibold transition-all duration-200 ${
+        !isOverallTab
+          ? "bg-teal-700 text-white shadow-sm"
+          : "text-slate-500 hover:bg-white hover:text-slate-700"
+      }`}
+    >
+      Marks Sheet
+    </button>
+  </div>
+</div>
+
 
       {/* Shared Filters */}
       <div className="border-b border-slate-100 p-3">

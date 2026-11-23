@@ -4,6 +4,7 @@ import { Routes, Route, Navigate } from "react-router-dom";
 import ProtectedRoute from "./Protected.router";
 import DashboardLayout from "../layout/Layout.layout";
 import Signin from "../screens/auth/Signin.auth";
+import {AuthListener} from "../routers/AuthListener.router";
 import { Eclipse } from "lucide-react";
 
 // ==================== LAZY SCREENS ====================
@@ -97,6 +98,8 @@ const PROTECTED_ROUTES = [
 ];
 
 const AppRouter = () => (
+  <>
+      <AuthListener />
   <Routes>
     <Route path="/" element={<Signin />} />
 
@@ -114,6 +117,8 @@ const AppRouter = () => (
 
     <Route path="*" element={<Navigate to="/" replace />} />
   </Routes>
+  </>
+
 );
 
 export default AppRouter;

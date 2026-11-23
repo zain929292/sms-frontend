@@ -77,12 +77,12 @@ export const STATIC_GROUPS = [
     ],
   },
 
-  {
-    moduleName: "Reports",
-    items: [
-      { label: "Reports", to: "/reports", icon: FileText },
-    ],
-  },
+  // {
+  //   moduleName: "Reports",
+  //   items: [
+  //     { label: "Reports", to: "/reports", icon: FileText },
+  //   ],
+  // },
 
   {
     moduleName: "Roles & Permissions",
@@ -94,12 +94,12 @@ export const STATIC_GROUPS = [
     ],
   },
 
-  {
-    moduleName: "System",
-    items: [
-      { label: "School Profile", to: "/system/school-profile", icon: School },
-      { label: "Activity Logs", to: "/system/activity-logs", icon: History },
-      { label: "Settings", to: "/admin/settings", icon: Settings },
-    ],
-  },
+  // {
+  //   moduleName: "System",
+  //   items: [
+  //     { label: "School Profile", to: "/system/school-profile", icon: School },
+  //     { label: "Activity Logs", to: "/system/activity-logs", icon: History },
+  //     { label: "Settings", to: "/admin/settings", icon: Settings },
+  //   ],
+  // },
 ];

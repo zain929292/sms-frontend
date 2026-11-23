@@ -37,9 +37,15 @@ const TableRow = memo(({
                   : "text-left"
             } ${col.cellClassName || ""}`}
           >
-            {col.render
-              ? col.render(row)
-              : (row[col.key] ?? "-")}
+            {col.render ? (
+              col.render(row, {
+                onClick: col.onClick
+                  ? () => col.onClick(row)
+                  : undefined,
+              })
+            ) : (
+              row[col.key] ?? "-"
+            )}
           </td>
         ))}
 

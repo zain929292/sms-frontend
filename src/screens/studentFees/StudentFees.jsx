@@ -1,4 +1,3 @@
-import { Plus } from "lucide-react";
 
 import Table from "../../utils/table/Table.util";
 import FilterBar from "../../utils/filter/FilterBar.util";
@@ -72,7 +71,10 @@ export default function StudentFees() {
 
   return (
     <div className="space-y-4">
-      <StudentFeeHeader onAddFee={s.openCreateModal} feeCount={s.stats.feecount} />
+      <StudentFeeHeader
+        onAddFee={s.openCreateModal}
+        feeCount={s.stats.feecount}
+      />
 
       <StudentFeeStats stats={s.stats} />
 
@@ -80,8 +82,7 @@ export default function StudentFees() {
 
       <Table
         title="Student Fee Management"
-
-        columns={StudentFeeTableColumns()}
+        columns={StudentFeeTableColumns(s.handleStudentClick)}
         data={s.studentFees}
         keyField="id"
         loading={s.loading}

@@ -18,7 +18,6 @@ const formatMonth = (value) => {
   if (!value) return "-";
 
   const [year, month] = value.split("-");
-
   const date = new Date(Number(year), Number(month) - 1);
 
   return date.toLocaleDateString("en-US", {
@@ -27,7 +26,7 @@ const formatMonth = (value) => {
   });
 };
 
-const StudentFeeTableColumns = () => [
+const StudentFeeTableColumns = (onStudentClick) => [
   {
     key: "id",
     label: "ID",
@@ -42,9 +41,13 @@ const StudentFeeTableColumns = () => [
     key: "student_name",
     label: "STUDENT NAME",
     render: (row) => (
-      <span className="text-xs font-bold text-slate-900">
+      <button
+        type="button"
+        onClick={() => onStudentClick?.(row)}
+        className="text-xs font-bold text-teal-700 hover:text-teal-900 hover:underline underline-offset-2 text-left"
+      >
         {row.student_name || "-"}
-      </span>
+      </button>
     ),
   },
   {
@@ -92,15 +95,15 @@ const StudentFeeTableColumns = () => [
       </span>
     ),
   },
-    {
+  {
     key: "total_amount",
     label: "TOTAL",
     render: (row) => (
-        <span className="text-xs font-semibold text-slate-900">
+      <span className="text-xs font-semibold text-slate-900">
         {formatAmount(row.total_amount)}
-        </span>
+      </span>
     ),
-    },
+  },
   {
     key: "paid_amount",
     label: "PAID",

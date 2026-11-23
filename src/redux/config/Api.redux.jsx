@@ -44,6 +44,7 @@ export const api = axios.create({
   timeout: 15000,
 });
 
+// REQUEST INTERCEPTOR
 api.interceptors.request.use((config) => {
   if (config.skipAuth) return config;
 
@@ -62,5 +63,27 @@ api.interceptors.request.use((config) => {
 
   return config;
 });
+
+// RESPONSE INTERCEPTOR
+api.interceptors.response.use(
+  (response) => response,
+
+  (error) => {
+    if (error.response?.status === 401) {
+      // Remove all authentication-related storage
+      localStorage.removeItem("authToken");
+      localStorage.removeItem("authUser");
+      localStorage.removeItem("persist:auth");
+      localStorage.removeItem("user");
+
+      // Redirect to login
+      if (window.location.pathname !== "/login") {
+        window.location.replace("/login");
+      }
+    }
+
+    return Promise.reject(error);
+  }
+);
 
 export default api;

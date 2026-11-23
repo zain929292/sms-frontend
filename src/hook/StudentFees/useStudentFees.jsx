@@ -33,6 +33,7 @@ const getValidationErrors = (error) => {
 
 export default function useStudentFees() {
   const navigate = useNavigate();
+
   const [studentFees, setStudentFees] = useState([]);
   const [pagination, setPagination] = useState(EMPTY_PAGINATION);
   const [stats, setStats] = useState({});
@@ -129,6 +130,23 @@ export default function useStudentFees() {
     return () => clearTimeout(timer);
   }, [fetchStudentFees]);
 
+  // Student fee history navigation
+  const handleStudentClick = useCallback(
+    (fee) => {
+      if (!fee?.student_id) {
+        toast.error("Student ID is missing.");
+        return;
+      }
+
+      navigate(`/finance/student-fee-history/${fee.student_id}`, {
+        state: {
+          studentName: fee.student_name,
+        },
+      });
+    },
+    [navigate]
+  );
+
   // Modal handlers
   const openCreateModal = useCallback(() => {
     setSelectedFee(null);
@@ -177,8 +195,6 @@ export default function useStudentFees() {
         return false;
       }
 
-      // class_id is intentionally not sent.
-      // Backend gets the student's latest enrollment and class.
       const payload = {
         student_id: studentId,
         fee_month: formData.fee_month,
@@ -193,11 +209,9 @@ export default function useStudentFees() {
       try {
         if (selectedFee?.id) {
           await updateStudentFee(selectedFee.id, payload);
-
           toast.success("Student fee updated successfully.");
         } else {
           await createStudentFee(payload);
-
           toast.success("Student fee created successfully.");
         }
 
@@ -263,10 +277,7 @@ export default function useStudentFees() {
 
         setCurrentPage(nextPage);
 
-        await fetchStudentFees(
-          { page: nextPage },
-          false
-        );
+        await fetchStudentFees({ page: nextPage }, false);
       } catch (error) {
         toast.error(
           getErrorMessage(error, "Failed to delete student fee.")
@@ -314,18 +325,11 @@ export default function useStudentFees() {
   // Table actions
   const getRowActions = useCallback(
     (row) => [
-        {
+      {
         label: "View Fee History",
         icon: <History size={14} />,
-        onClick: (selectedRow) => {
-          const fee = selectedRow || row;
-
-          navigate(`/finance/student-fee-history/${fee.student_id}`, {
-            state: {
-              studentName: fee.student_name,
-            },
-          });
-        },
+        onClick: (selectedRow) =>
+          handleStudentClick(selectedRow || row),
       },
       {
         label: "View Student Fee",
@@ -347,7 +351,12 @@ export default function useStudentFees() {
           handleDelete(selectedRow || row),
       },
     ],
-    [ navigate, openViewModal, openEditModal, handleDelete]
+    [
+      handleStudentClick,
+      openViewModal,
+      openEditModal,
+      handleDelete,
+    ]
   );
 
   return {
@@ -363,6 +372,7 @@ export default function useStudentFees() {
     setCurrentPage,
     itemsPerPage,
     setItemsPerPage,
+
     totalPages: Math.max(
       1,
       Number(pagination.last_page || 1)
@@ -393,6 +403,7 @@ export default function useStudentFees() {
 
     handleSaveStudentFee,
     handleDelete,
+    handleStudentClick,
     getRowActions,
     fetchStudentFees,
   };

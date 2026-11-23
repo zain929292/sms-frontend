@@ -890,7 +890,7 @@ const Permissions = () => {
           ))}
         </div>
 
-        <div className="relative z-30 bg-white/90 border border-white shadow-[0_10px_40px_rgba(15,118,110,0.1)] rounded-2xl p-5 flex flex-col md:flex-row md:items-center justify-between gap-4">
+        <div className="relative z-10 bg-white/90 border border-white shadow-[0_10px_40px_rgba(15,118,110,0.1)] rounded-2xl p-5 flex flex-col md:flex-row md:items-center justify-between gap-4">
           <RoleSelector roles={roles} selectedRole={selectedRole} onSelect={handleSelectRole} onClear={handleClearRole} />
           <button
             onClick={handleSavePermissions}

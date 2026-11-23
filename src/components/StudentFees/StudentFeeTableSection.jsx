@@ -1,4 +1,3 @@
-
 import Table from "../../utils/table/Table.util";
 import StudentFeeTableColumns from "./StudentFeeTableColumns";
 
