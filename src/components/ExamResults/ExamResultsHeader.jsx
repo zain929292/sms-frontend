@@ -28,16 +28,6 @@ const ExamResultsHeader = ({
           </p>
         </div>
 
-        {isOverall && (
-          <button
-            type="button"
-            onClick={onAddClick}
-            className="inline-flex min-h-9 items-center justify-center gap-1.5 self-start rounded-lg bg-[var(--primary)] px-3.5 py-2 text-xs font-semibold text-white shadow-sm transition hover:bg-[var(--secondary)] focus:outline-none focus:ring-2 focus:ring-teal-600/20 sm:self-center"
-          >
-            <Plus size={15} />
-            Add Result
-          </button>
-        )}
       </div>
 
       <div className="mt-4 flex flex-wrap items-center gap-x-4 gap-y-2 border-t border-teal-100/80 pt-3 text-[11px] text-slate-500">

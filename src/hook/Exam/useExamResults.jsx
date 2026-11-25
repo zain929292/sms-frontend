@@ -1,19 +1,14 @@
 
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { toast } from "react-hot-toast";
 
 import {
   getExamResults,
-  createExamResult,
-  updateExamResult,
   deleteExamResult,
 } from "../../redux/api_data/examApi/examResultApi";
 
 import { getExams } from "../../redux/api_data/examApi/examApi";
 
-import { getStudentEnrollments } from "../../redux/api_data/studentEnrollmentApi/studentEnrollmentApi";
-
-// Adjust this import path according to your project structure.
 import useClasses from "../useClasses";
 
 const EMPTY_PAGINATION = {
@@ -25,66 +20,47 @@ const EMPTY_PAGINATION = {
   prev_page_url: null,
 };
 
+const EMPTY_STATS = {
+  total_results: 0,
+  passed_students: 0,
+  failed_students: 0,
+};
+
 const getErrorMessage = (error, fallback) =>
   error?.response?.data?.message ||
   error?.message ||
   fallback;
 
 export default function useExamResults() {
-  // --------------------------------------------------
   // Data
-  // --------------------------------------------------
-
   const [results, setResults] = useState([]);
   const [exams, setExams] = useState([]);
-  const [students, setStudents] = useState([]);
 
-  // Fetch classes directly from Class API
   const { classes } = useClasses(1, 100);
 
-  // --------------------------------------------------
   // Class Tabs
-  // --------------------------------------------------
-
   const [selectedClassTab, setSelectedClassTab] = useState("all");
   const [classTabCounts, setClassTabCounts] = useState({});
 
-  // --------------------------------------------------
-  // Pagination
-  // --------------------------------------------------
+  // Statistics
+  const [stats, setStats] = useState(EMPTY_STATS);
 
+  // Pagination
   const [pagination, setPagination] = useState(EMPTY_PAGINATION);
   const [page, setPage] = useState(1);
   const [limit, setLimit] = useState(10);
 
-  // --------------------------------------------------
   // Filters
-  // --------------------------------------------------
-
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedExamId, setSelectedExamId] = useState("all");
   const [selectedGrade, setSelectedGrade] = useState("all");
   const [selectedStatus, setSelectedStatus] = useState("all");
 
-  // --------------------------------------------------
-  // Modal
-  // --------------------------------------------------
-
-  const [isModalOpen, setIsModalOpen] = useState(false);
-  const [selectedResult, setSelectedResult] = useState(null);
-
-  // --------------------------------------------------
   // Loading
-  // --------------------------------------------------
-
   const [loading, setLoading] = useState(false);
-  const [saving, setSaving] = useState(false);
   const [deletingId, setDeletingId] = useState(null);
 
-  // --------------------------------------------------
-  // Fetch Overall Results
-  // --------------------------------------------------
-
+  // Fetch Exam Results
   const fetchResults = useCallback(async () => {
     setLoading(true);
 
@@ -127,11 +103,20 @@ export default function useExamResults() {
         ...paginationData,
       });
 
+      // Backend Statistics
+      setStats({
+        total_results: Number(statsData.total_results || 0),
+        passed_students: Number(statsData.passed_students || 0),
+        failed_students: Number(statsData.failed_students || 0),
+      });
+
+      // Backend Class Tab Counts
       setClassTabCounts(
         statsData.class_tab_counts ||
         statsData.classTabCounts ||
         {}
       );
+
     } catch (error) {
       console.error("Failed to fetch exam results:", error);
 
@@ -141,6 +126,9 @@ export default function useExamResults() {
 
       setResults([]);
       setPagination(EMPTY_PAGINATION);
+      setStats(EMPTY_STATS);
+      setClassTabCounts({});
+
     } finally {
       setLoading(false);
     }
@@ -154,10 +142,7 @@ export default function useExamResults() {
     selectedClassTab,
   ]);
 
-  // --------------------------------------------------
   // Fetch Exams
-  // --------------------------------------------------
-
   const fetchExams = useCallback(async () => {
     try {
       const response = await getExams({
@@ -179,124 +164,16 @@ export default function useExamResults() {
     }
   }, []);
 
-  // --------------------------------------------------
-  // Fetch Active Students
-  // --------------------------------------------------
-
-  const fetchStudents = useCallback(async () => {
-    try {
-      const response = await getStudentEnrollments({
-        page: 1,
-        limit: 100,
-        status: "active",
-      });
-
-      const records = response.data?.data || [];
-
-      const activeStudents = records.filter(
-        (item) => item.status === "active"
-      );
-
-      setStudents(activeStudents);
-    } catch (error) {
-      console.error("Failed to fetch students:", error);
-
-      toast.error(
-        getErrorMessage(error, "Failed to fetch students.")
-      );
-
-      setStudents([]);
-    }
-  }, []);
-
-  // --------------------------------------------------
-  // Initial Data
-  // --------------------------------------------------
-
+  // Initial Fetch
   useEffect(() => {
     fetchExams();
-    fetchStudents();
-  }, [fetchExams, fetchStudents]);
+  }, [fetchExams]);
 
   useEffect(() => {
     fetchResults();
   }, [fetchResults]);
 
-  // --------------------------------------------------
-  // Modal
-  // --------------------------------------------------
-
-  const openCreateModal = useCallback(() => {
-    setSelectedResult(null);
-    setIsModalOpen(true);
-  }, []);
-
-  const openEditModal = useCallback((result) => {
-    setSelectedResult(result);
-    setIsModalOpen(true);
-  }, []);
-
-  const closeModal = useCallback(() => {
-    setIsModalOpen(false);
-    setSelectedResult(null);
-  }, []);
-
-  // --------------------------------------------------
-  // Create / Update
-  // --------------------------------------------------
-
-  const handleSaveResult = useCallback(
-    async (formData) => {
-      setSaving(true);
-
-      try {
-        if (selectedResult?.id) {
-          await updateExamResult(selectedResult.id, formData);
-
-          toast.success("Exam result updated successfully.");
-        } else {
-          await createExamResult(formData);
-
-          toast.success("Exam result created successfully.");
-        }
-
-        closeModal();
-
-        if (page !== 1) {
-          setPage(1);
-        } else {
-          await fetchResults();
-        }
-
-        return true;
-      } catch (error) {
-        console.error("Failed to save exam result:", error);
-
-        const errors = error?.response?.data?.errors;
-
-        if (errors) {
-          Object.values(errors)
-            .flat()
-            .filter(Boolean)
-            .forEach((message) => toast.error(message));
-        } else {
-          toast.error(
-            getErrorMessage(error, "Failed to save exam result.")
-          );
-        }
-
-        return false;
-      } finally {
-        setSaving(false);
-      }
-    },
-    [selectedResult, closeModal, page, fetchResults]
-  );
-
-  // --------------------------------------------------
-  // Delete
-  // --------------------------------------------------
-
+  // Delete Exam Result
   const handleDeleteResult = useCallback(
     async (id) => {
       if (!id || deletingId) return false;
@@ -315,6 +192,7 @@ export default function useExamResults() {
         }
 
         return true;
+
       } catch (error) {
         console.error("Failed to delete exam result:", error);
 
@@ -323,6 +201,7 @@ export default function useExamResults() {
         );
 
         return false;
+
       } finally {
         setDeletingId(null);
       }
@@ -330,10 +209,7 @@ export default function useExamResults() {
     [deletingId, results.length, page, fetchResults]
   );
 
-  // --------------------------------------------------
-  // Filters
-  // --------------------------------------------------
-
+  // Search Handler
   const handleSearchChange = useCallback((value) => {
     setSearchTerm(
       typeof value === "string" ? value : value.target.value
@@ -347,26 +223,31 @@ export default function useExamResults() {
     setPage(1);
   }, []);
 
+  // Exam Filter
   const handleExamChange = useCallback((value) => {
     setSelectedExamId(String(value));
     setPage(1);
   }, []);
 
+  // Grade Filter
   const handleGradeChange = useCallback((value) => {
     setSelectedGrade(String(value));
     setPage(1);
   }, []);
 
+  // Status Filter
   const handleStatusChange = useCallback((value) => {
     setSelectedStatus(String(value));
     setPage(1);
   }, []);
 
+  // Class Tab Handler
   const handleClassTabChange = useCallback((value) => {
     setSelectedClassTab(String(value));
     setPage(1);
   }, []);
 
+  // Pagination Handlers
   const handlePageChange = useCallback((value) => {
     setPage(Number(value));
   }, []);
@@ -376,6 +257,7 @@ export default function useExamResults() {
     setPage(1);
   }, []);
 
+  // Clear All Filters
   const handleClearAllFilters = useCallback(() => {
     setSearchTerm("");
     setSelectedExamId("all");
@@ -385,10 +267,7 @@ export default function useExamResults() {
     setPage(1);
   }, []);
 
-  // --------------------------------------------------
-  // Filter State
-  // --------------------------------------------------
-
+  // Check Active Filters
   const hasFilters = Boolean(
     searchTerm ||
     selectedExamId !== "all" ||
@@ -397,50 +276,19 @@ export default function useExamResults() {
     selectedClassTab !== "all"
   );
 
-  // --------------------------------------------------
-  // Statistics
-  // --------------------------------------------------
-
-  const stats = useMemo(() => {
-    const passed = results.filter(
-      (item) => item.result_status === "pass"
-    ).length;
-
-    const failed = results.filter(
-      (item) => item.result_status === "fail"
-    ).length;
-
-    const totalMarks = results.reduce(
-      (sum, item) =>
-        sum + Number(item.obtained_marks || 0),
-      0
-    );
-
-    const averageMarks = results.length
-      ? (totalMarks / results.length).toFixed(2)
-      : "0.00";
-
-    return {
-      total: pagination.total,
-      passed,
-      failed,
-      average_marks: averageMarks,
-    };
-  }, [results, pagination.total]);
-
-  // --------------------------------------------------
-  // Return
-  // --------------------------------------------------
-
   return {
     // Data
     results,
     exams,
-    students,
     classes,
 
     // Statistics
     stats,
+
+    // Class Tabs
+    selectedClassTab,
+    classTabCounts,
+    activeCount: pagination.total,
 
     // Pagination
     pagination,
@@ -453,33 +301,15 @@ export default function useExamResults() {
     selectedGrade,
     selectedStatus,
 
-    // Class Tabs
-    selectedClassTab,
-    classTabCounts,
-    activeCount: pagination.total,
-
-    // Modal
-    isModalOpen,
-    selectedResult,
-
     // Loading
     loading,
-    saving,
     deletingId,
 
     // Filter State
     hasFilters,
 
-    // Modal Handlers
-    openCreateModal,
-    openEditModal,
-    closeModal,
-
-    // CRUD
-    handleSaveResult,
+    // Actions
     handleDeleteResult,
-
-    // Filter Handlers
     handleSearchChange,
     handleClearSearch,
     handleExamChange,
@@ -493,6 +323,5 @@ export default function useExamResults() {
     // Fetch
     fetchResults,
     fetchExams,
-    fetchStudents,
   };
 }

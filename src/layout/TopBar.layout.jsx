@@ -1,7 +1,7 @@
 import React, { memo, useCallback, useState } from "react";
 import { Menu } from "lucide-react";
 import { useSelector } from "react-redux";
-import UserProfileModal from "../utils/modals/user-modal/User.modal.util.jsx";
+import UserProfileModal from "../utils/modals/user-modal/UserProfile.modal.util.jsx";
 
 const getInitials = (name) => {
   if (!name) return "U";
@@ -24,7 +24,7 @@ const Topbar = ({
   const user = useSelector((state) => state.auth?.user);
 
   const name = user?.name || fallbackName;
-  const role = user?.role || fallbackRole;
+  const role = user?.role_name || fallbackRole;
 
   const toggleProfile = useCallback(
     () => setIsProfileOpen((prev) => !prev),

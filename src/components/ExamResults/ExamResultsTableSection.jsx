@@ -103,12 +103,12 @@ export default function ExamResultsTableSection({
           <div className="min-w-[200px] flex-1">
             <input
               type="text"
-              value={isOverallTab ? r.searchTerm : m.marksSheetSearchTerm}
+              value={isOverallTab ? r.searchTerm : m.searchTerm}
               onChange={(e) => {
                 if (isOverallTab) {
                   r.handleSearchChange(e.target.value);
                 } else {
-                  m.handleMarksSheetSearchChange(e.target.value);
+                  m.handleSearchChange(e.target.value);
                 }
               }}
               placeholder={

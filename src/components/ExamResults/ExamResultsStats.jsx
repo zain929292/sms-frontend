@@ -18,9 +18,10 @@ const ExamResultsStats = ({
 }) => {
   const isOverall = activeTab === "overall";
 
-  const total = Number(stats.total ?? 0);
-  const passed = Number(stats.passed ?? 0);
-  const failed = Number(stats.failed ?? 0);
+  // Backend overall statistics
+  const total = Number(stats.total_results ?? 0);
+  const passed = Number(stats.passed_students ?? 0);
+  const failed = Number(stats.failed_students ?? 0);
   const averageMarks = Number(stats.average_marks ?? 0);
 
   const passedRate = total
@@ -34,7 +35,7 @@ const ExamResultsStats = ({
   const cards = isOverall
     ? [
         {
-          key: "total",
+          key: "total_results",
           title: "Total Results",
           value: total,
           icon: FileText,
@@ -64,7 +65,7 @@ const ExamResultsStats = ({
         {
           key: "average",
           title: "Average Marks",
-          value: averageMarks,
+          value: averageMarks.toFixed(2),
           icon: Award,
           color: "amber",
           subtitle: "Average obtained marks",

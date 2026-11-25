@@ -1,10 +1,3 @@
-/**
- * @file Users.jsx
- * @module Screens/Users
- * @description User & staff list with stat cards, quick lookup, CSV export,
- *              and client-side pagination for instant per-page changes.
- */
-
 import { useEffect, useState, useMemo, useCallback } from "react";
 import {
   Plus,

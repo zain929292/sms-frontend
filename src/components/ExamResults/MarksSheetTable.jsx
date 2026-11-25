@@ -265,7 +265,7 @@ export default function MarksSheetTable({
                           type="number"
                           min="0"
                           max={subject.total_marks}
-                          step="0.01"
+                          step="0"
                           value={value}
                           placeholder="—"
                           onChange={(e) =>

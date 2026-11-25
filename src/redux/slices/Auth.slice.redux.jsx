@@ -80,14 +80,22 @@ export const login = createAsyncThunk(
       const { data } = await api.post("/auth/login", loginData, {
         skipAuth: true,
       });
+
       const { token, user, message } = data;
 
       if (!user || !token) {
         throw new Error("Invalid response structure from server");
       }
 
-      saveSession(user, token);
-      return { user, token, message };
+      const formattedUser = mapUser(user);
+
+      saveSession(formattedUser, token);
+
+      return {
+        user: formattedUser,
+        token,
+        message,
+      };
     } catch (error) {
       return rejectWithValue(toRejection(error, "Login failed"));
     }

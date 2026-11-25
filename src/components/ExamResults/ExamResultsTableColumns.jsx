@@ -22,12 +22,12 @@ const ExamResultsTableColumns = ({
     ),
   },
   {
-    key: "student_id",
-    label: "STUDENT ID",
+    key: "class_name",
+    label: "CLASS",
     width: "100px",
     render: (row) => (
       <span className="text-xs font-semibold text-slate-700">
-        {row.student_id ?? "-"}
+        {row.class_name ?? "-"}
       </span>
     ),
   },
@@ -47,6 +47,16 @@ const ExamResultsTableColumns = ({
     render: (row) => (
       <span className="text-xs font-semibold text-slate-700">
         {Number(row.obtained_marks || 0).toFixed(2)}
+      </span>
+    ),
+  },
+  {
+    key: "total_marks",
+    label: "TOTAL MARKS",
+    width: "130px",
+    render: (row) => (
+      <span className="text-xs font-semibold text-slate-700">
+        {Number(row.total_marks || 0).toFixed(2)}
       </span>
     ),
   },
@@ -102,14 +112,6 @@ const ExamResultsTableColumns = ({
     width: "100px",
     render: (row) => (
       <div className="flex items-center gap-2">
-        <button
-          type="button"
-          onClick={() => onEdit(row)}
-          title="Edit Result"
-          className="rounded-md p-1.5 text-teal-600 transition hover:bg-teal-50"
-        >
-          <Pencil size={15} />
-        </button>
 
         <button
           type="button"
